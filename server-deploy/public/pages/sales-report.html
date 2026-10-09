@@ -1,0 +1,16 @@
+<div class="container-fluid px-4 d-none" id="cashierReportView">
+    <div class="card shadow-sm mb-3"><div class="card-body"><div class="row g-2 align-items-end">
+      <div class="col-md-4"><label for="cashierReportFrom" class="form-label small">Dari tanggal</label><input id="cashierReportFrom" type="date" class="form-control"></div>
+      <div class="col-md-4"><label for="cashierReportTo" class="form-label small">Sampai tanggal</label><input id="cashierReportTo" type="date" class="form-control"></div>
+      <div class="col-md-4 d-flex gap-2">
+        <button class="btn btn-primary flex-grow-1" onclick="loadCashierReport()"><i class="bi bi-search me-1"></i> Tampilkan</button>
+        <button class="btn btn-outline-light" onclick="downloadCashierReportPdf()" title="Unduh PDF"><i class="bi bi-file-earmark-pdf"></i></button>
+      </div>
+    </div></div></div>
+    <div class="row g-3 mb-3">
+      <div class="col-sm-6 col-xl-3"><div class="card shadow-sm"><div class="card-body"><div class="text-muted small">Total Penjualan</div><div class="fs-4 fw-bold" id="cashierReportTotal">Rp0</div><div class="small" id="cashierReportCount">0 transaksi</div></div></div></div>
+      <div class="col-sm-6 col-xl-3"><div class="card shadow-sm"><div class="card-body"><div class="text-muted small">Rata-rata per Transaksi</div><div class="fs-4 fw-bold" id="cashierReportAverage">Rp0</div></div></div></div>
+    </div>
+    <div class="card shadow-sm mb-3"><div class="card-header fw-bold">Grafik Penjualan per Jam</div><div class="card-body"><canvas id="cashierHourlyChart" height="90"></canvas></div></div>
+    <div class="card shadow-sm"><div class="card-header fw-bold">Rincian Transaksi</div><div class="table-responsive"><table class="table table-sm mb-0"><thead class="table-light"><tr><th>Tanggal</th><th>Jam</th><th>No. Faktur</th><th>Kasir</th><th class="text-end">Total</th></tr></thead><tbody id="cashierReportBody"></tbody></table></div></div>
+  </div>

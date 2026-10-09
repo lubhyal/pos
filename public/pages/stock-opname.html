@@ -1,0 +1,20 @@
+<div class="container-fluid px-4 d-none" id="opnameView">
+    <div class="row g-3">
+      <div class="col-lg-8">
+        <div class="card shadow-sm mb-3"><div class="card-body">
+          <label for="opnameSearch" class="form-label fw-semibold">Cari barang untuk dihitung</label>
+          <input id="opnameSearch" class="form-control" autocomplete="off" placeholder="Barcode, kode, atau nama barang">
+          <div id="opnameResults" class="list-group mt-2"></div>
+        </div></div>
+        <div class="card shadow-sm"><div class="table-responsive">
+          <table class="table table-sm align-middle mb-0"><thead class="table-light"><tr><th>Barang</th><th class="text-end">Stok sistem</th><th class="text-center">Stok fisik</th><th class="text-end">Selisih</th><th></th></tr></thead><tbody id="opnameCartBody"></tbody></table>
+        </div></div>
+      </div>
+      <div class="col-lg-4"><div class="card shadow-sm"><div class="card-header fw-bold">Hitung Stok Fisik</div><div class="card-body">
+        <label for="opnameDate" class="form-label small">Tanggal opname</label>
+        <input id="opnameDate" type="date" class="form-control form-control-sm mb-3">
+        <div class="small text-muted mb-3">Selisih dihitung otomatis. Simpan akan memperbarui stok dan mencatat mutasi koreksi.</div>
+        <button id="btnSaveOpname" class="btn btn-primary w-100" onclick="saveOpname()"><i class="bi bi-check2-square me-1"></i> Simpan Opname</button>
+      </div></div></div>
+    </div>
+  </div>

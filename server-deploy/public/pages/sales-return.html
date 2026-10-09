@@ -1,0 +1,12 @@
+<div class="container-fluid px-4 d-none" id="salesReturnView">
+    <div class="row g-3"><div class="col-lg-8"><div class="card"><div class="card-body">
+      <label for="returnSourceSale" class="form-label fw-semibold">Faktur penjualan asal</label>
+      <select id="returnSourceSale" class="form-select"><option value="">Pilih faktur</option></select>
+      <div class="table-responsive mt-3"><table class="table table-sm"><thead class="table-light"><tr><th>Barang</th><th>Dijual</th><th>Sisa retur</th><th>Retur sekarang</th><th class="text-end">Nilai</th></tr></thead><tbody id="salesReturnBody"></tbody></table></div>
+    </div></div></div><div class="col-lg-4"><div class="card"><div class="card-header fw-bold">Retur Penjualan</div><div class="card-body">
+      <label class="form-label small" for="returnSaleDate">Tanggal retur</label><input id="returnSaleDate" type="date" class="form-control form-control-sm mb-2">
+      <div class="d-flex justify-content-between mb-2"><span>Total retur</span><strong id="salesReturnTotal">Rp0</strong></div>
+      <label class="form-label small" for="salesRefund">Refund tunai</label><input id="salesRefund" type="number" min="0" step="0.01" value="0" class="form-control form-control-sm mb-3">
+      <button id="saveSalesReturn" class="btn btn-warning w-100" onclick="saveSalesReturn()"><i class="bi bi-arrow-return-left me-1"></i> Simpan Retur</button>
+    </div></div></div></div>
+  </div>

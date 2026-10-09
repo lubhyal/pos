@@ -1,0 +1,87 @@
+<div class="container-fluid px-4" id="stockView">
+    <!-- Panel Filter dan Pencarian -->
+    <div class="card shadow-sm mb-3">
+      <div class="card-body py-3">
+        <h6 class="card-title fw-bold text-secondary mb-2"><i class="bi bi-funnel me-1"></i> PENCARIAN & FILTER</h6>
+        <div class="row g-2">
+          <div class="col-md-3">
+            <label class="form-label small text-muted mb-1">Nama Barang</label>
+            <input type="text" id="searchName" class="form-control form-control-sm" placeholder="Cari Nama Barang...">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small text-muted mb-1">Barcode</label>
+            <input type="text" id="searchBarcode" class="form-control form-control-sm" placeholder="Scan / Cari Barcode...">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label small text-muted mb-1">Kode Barang (KdBar)</label>
+            <input type="text" id="searchKdBar" class="form-control form-control-sm" placeholder="Cari Kode Barang...">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label small text-muted mb-1">Kelompok (KdKel)</label>
+            <select id="filterKdKel" class="form-select form-select-sm">
+              <option value="">-- Semua Kelompok --</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label small text-muted mb-1">Lokasi Rak (RAK)</label>
+            <select id="filterRak" class="form-select form-select-sm">
+              <option value="">-- Semua Lokasi Rak --</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabel Data Stok -->
+    <div class="card shadow-sm">
+      <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center py-2 gap-2">
+        <h6 class="mb-0 fw-bold">Daftar Stok <span class="badge bg-primary ms-1" id="totalItemsBadge">Total: 0</span></h6>
+        <div class="d-flex flex-wrap justify-content-end gap-2">
+          <button class="btn btn-sm btn-outline-secondary" onclick="downloadExcelTemplate()" title="Unduh format Excel">
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i> Template
+          </button>
+          <button class="btn btn-sm btn-outline-success" onclick="document.getElementById('excelFile').click()" title="Upload data dari Excel">
+            <i class="bi bi-upload me-1"></i> Upload Excel
+          </button>
+          <button class="btn btn-sm btn-success" onclick="downloadExcel()" title="Unduh semua data stok">
+            <i class="bi bi-download me-1"></i> Download Excel
+          </button>
+          <input type="file" id="excelFile" accept=".xlsx,.xls" hidden>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover table-striped align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>KdBar</th>
+                <th>Barcode</th>
+                <th>Nama Barang</th>
+                <th>Kelompok</th>
+                <th>Satuan</th>
+                <th class="text-end">H. Beli</th>
+                <th class="text-end">H. Jual</th>
+                <th class="text-end">Markup (%)</th>
+                <th class="text-end">Stok</th>
+                <th>Rak</th>
+                <th>Supplier</th>
+                <th class="text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody">
+              <tr>
+                <td colspan="12" class="text-center py-4 text-muted">Memuat data...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <!-- Footer Pagination -->
+      <div class="card-footer bg-white d-flex justify-content-between align-items-center py-2">
+        <span class="small text-muted" id="paginationInfo">Menampilkan 0 dari 0 data</span>
+        <nav>
+          <ul class="pagination pagination-sm mb-0" id="paginationControls"></ul>
+        </nav>
+      </div>
+    </div>
+  </div>

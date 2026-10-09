@@ -1,0 +1,2535 @@
+<!DOCTYPE html>
+<html lang="id" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aplikasi Manajemen Stok Barang</title>
+  <!-- Bootstrap 5 CSS CDN (URL Sudah Diperbaiki) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body { background-color: #111a18; color: #e7efec; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .card { --bs-card-bg: #17211f; --bs-card-border-color: #35443f; }
+    .card-header-custom { background-color: #192725; color: white; }
+    .card-header, .card-footer { background-color: #1c2926 !important; border-color: #35443f; }
+    .bg-white, .bg-light { background-color: #1c2926 !important; }
+    .text-dark { color: #e7efec !important; }
+    .text-muted, .text-secondary { color: #a8b8b2 !important; }
+    .form-control, .form-select { background-color: #111a18; color: #e7efec; border-color: #445650; }
+    .form-control::placeholder { color: #8fa19a; }
+    .form-control:focus, .form-select:focus { background-color: #111a18; color: #e7efec; border-color: #69b8a4; box-shadow: 0 0 0 .2rem rgb(105 184 164 / 20%); }
+    .table { --bs-table-bg: #17211f; --bs-table-color: #e7efec; --bs-table-striped-bg: #1c2926; --bs-table-striped-color: #e7efec; --bs-table-hover-bg: #263632; --bs-table-hover-color: #f4faf7; --bs-table-border-color: #35443f; }
+    .table-light { --bs-table-bg: #263632; --bs-table-color: #e7efec; }
+    .list-group-item { background-color: #17211f; color: #e7efec; border-color: #35443f; }
+    .modal-content { background-color: #17211f; border-color: #35443f; }
+    .page-link { background-color: #17211f; border-color: #35443f; color: #8fd0bd; }
+    .page-item.active .page-link { background-color: #26715f; border-color: #26715f; color: #fff; }
+    .table-responsive { max-height: 62vh; overflow-y: auto; }
+    .table sticky th { position: sticky; top: 0; background-color: #f8fafc; z-index: 1; }
+    .topbar { position: sticky; top: 0; z-index: 1030; }
+    .app-layout { display: flex; align-items: flex-start; }
+    .sidebar { --bs-offcanvas-width: 260px; --bs-offcanvas-bg: #16211f; --bs-offcanvas-color: #e7efec; --bs-offcanvas-border-color: #2a3835; flex: 0 0 auto; }
+    .sidebar .sidebar-heading { display: block; font-size: .68rem; text-transform: uppercase; letter-spacing: .05em; color: #7d938c; padding: .85rem .6rem .3rem; }
+    .sidebar .sidebar-heading:first-child { padding-top: .1rem; }
+    .sidebar .nav-link { display: flex; align-items: center; gap: .55rem; width: 100%; text-align: left; color: #c9d6d1; padding: .55rem .6rem; border-radius: .45rem; font-size: .875rem; border: 0; background: transparent; }
+    .sidebar .nav-link:hover { background-color: #1f2e2a; color: #fff; }
+    .sidebar .nav-link.active { background-color: #26715f; color: #fff; font-weight: 600; }
+    .sidebar .nav-link i { width: 1.1rem; text-align: center; font-size: 1rem; }
+    .main-content { flex: 1 1 0%; min-width: 0; padding-top: 1rem; }
+    @media (min-width: 992px) {
+      .sidebar { position: sticky; top: 56px; height: calc(100vh - 56px); overflow-y: auto; border-right: 1px solid #2a3835; }
+    }
+    @media (max-width: 575.98px) {
+      html, body { max-width: 100%; overflow-x: hidden; }
+      body { font-size: .875rem; }
+      .navbar { padding-block: .3rem; margin-bottom: 0 !important; }
+      .navbar > .container-fluid { padding-inline: .65rem !important; gap: .25rem; flex-wrap: nowrap; }
+      .navbar-brand { margin: 0; font-size: .95rem; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .navbar .container-fluid > .d-flex { flex-wrap: nowrap !important; justify-content: flex-end; gap: .35rem !important; overflow-x: auto; padding-bottom: .2rem; scrollbar-width: thin; }
+      .navbar .container-fluid > .d-flex > * { flex: 0 0 auto; }
+      .navbar .btn { padding: .3rem .5rem; font-size: .72rem; white-space: nowrap; }
+      #currentUserLabel { max-width: 5.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .main-content { padding-top: .65rem; }
+      .container-fluid.px-4 { padding-inline: .625rem !important; }
+      .row.g-3 { --bs-gutter-x: .65rem; --bs-gutter-y: .65rem; }
+      .card { border-radius: .35rem; }
+      .card-body { padding: .75rem; }
+      .card-header, .card-footer { padding: .5rem .65rem !important; }
+      .table { font-size: .78rem; }
+      .table-responsive { max-height: 48vh; overscroll-behavior: contain; }
+      #stockView table { min-width: 900px; }
+      #kasirView .table-responsive, #purchaseView .table-responsive, #opnameView .table-responsive { max-height: 40vh; }
+      #kasirView table, #purchaseView table, #opnameView table { min-width: 560px; }
+      #purchaseReturnView .table-responsive, #salesReturnView .table-responsive { max-height: 40vh; }
+      #purchaseReturnView table, #salesReturnView table { min-width: 600px; }
+      #reportView table { min-width: 520px; }
+      #reportView .fs-4 { font-size: 1.25rem !important; }
+      .pagination { flex-wrap: wrap; justify-content: flex-end; }
+      .pagination .page-link { padding: .25rem .45rem; }
+      .modal-dialog { width: auto; height: calc(100dvh - .8rem); margin: .4rem; display: flex; align-items: center; }
+      .modal-content { max-height: 100%; width: 100%; }
+      .modal-body { overflow-y: auto; }
+      #authScreen { min-height: 100dvh; padding: 1rem !important; }
+      #authScreen .card-body { padding: 1rem !important; }
+      #pendingSalesList .list-group-item { min-width: 0; }
+    }
+    #receiptPrint { display: none; }
+    @media print {
+      @page { size: 80mm auto; margin: 3mm; }
+      body * { visibility: hidden !important; }
+      #receiptPrint, #receiptPrint * { visibility: visible !important; }
+      #receiptPrint { display: block !important; position: absolute; inset: 0 auto auto 0; width: 74mm; color: #000 !important; background: #fff !important; font: 10pt/1.25 monospace; }
+      #receiptPrint h1, #receiptPrint h2, #receiptPrint p { margin: 0 0 2mm; text-align: center; }
+      #receiptPrint h1 { font-size: 12pt; }
+      #receiptPrint table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+      #receiptPrint th, #receiptPrint td { padding: 1mm 0; border-bottom: 1px dashed #555; }
+      #receiptPrint .text-end { text-align: right; }
+      #receiptPrint .receipt-total { margin-top: 2mm; border-top: 1px solid #000; padding-top: 2mm; }
+    }
+  </style>
+</head>
+<body>
+
+  <section id="authScreen" class="container d-flex align-items-center justify-content-center min-vh-100 py-4">
+    <div class="card shadow-sm w-100" style="max-width: 440px;">
+      <div class="card-body p-4">
+        <h1 class="h4 fw-bold mb-1">ABID KARYA SAYUR</h1>
+        <p class="text-muted small mb-4">Login POS</p>
+        <div id="authError" class="alert alert-danger py-2 d-none" role="alert"></div>
+        <form id="loginForm">
+          <div class="mb-3"><label for="loginCode" class="form-label">Pilih user</label><select id="loginCode" class="form-select" autocomplete="username" required><option value="">Memuat user...</option></select></div>
+          <div class="mb-3"><label for="loginPassword" class="form-label">Password</label><input id="loginPassword" type="password" class="form-control" autocomplete="current-password" required></div>
+          <button id="loginButton" class="btn btn-primary w-100" type="submit"><i class="bi bi-box-arrow-in-right me-1"></i> Masuk</button>
+        </form>
+        <form id="setupForm" class="d-none">
+          <h2 class="h6 fw-bold">Setup admin pertama</h2>
+          <div class="mb-2"><label for="setupToken" class="form-label small">Token dari konsol server</label><input id="setupToken" class="form-control form-control-sm" autocomplete="off" required></div>
+          <div class="mb-2"><label for="setupCode" class="form-label small">Kode user (maks. 5 karakter)</label><input id="setupCode" class="form-control form-control-sm" maxlength="5" list="legacyUserCodes" required><datalist id="legacyUserCodes"></datalist></div>
+          <div class="mb-2"><label for="setupName" class="form-label small">Nama user</label><input id="setupName" class="form-control form-control-sm" maxlength="20" required></div>
+          <div class="mb-3"><label for="setupPassword" class="form-label small">Password baru (minimal 3 karakter)</label><input id="setupPassword" type="password" class="form-control form-control-sm" minlength="3" autocomplete="new-password" required></div>
+          <button id="setupButton" class="btn btn-primary w-100" type="submit"><i class="bi bi-shield-lock me-1"></i> Buat Admin</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <div id="appShell" class="d-none">
+
+  <!-- Top Navigation Header -->
+  <nav class="navbar navbar-dark card-header-custom topbar shadow-sm">
+    <div class="container-fluid px-3 px-lg-4">
+      <button class="btn btn-outline-light btn-sm d-lg-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav" aria-label="Buka menu">
+        <i class="bi bi-list fs-5"></i>
+      </button>
+      <span class="navbar-brand mb-0 h1 fw-bold flex-grow-1 flex-lg-grow-0"><i class="bi bi-box-seam me-2"></i>ABID KARYA SAYUR</span>
+      <div class="d-flex gap-2 align-items-center">
+        <span class="navbar-text text-white small" id="currentUserLabel"></span>
+        <button class="btn btn-primary btn-sm" id="btnAddProduct" onclick="openAddModal()">
+          <i class="bi bi-plus-lg me-1"></i> <span class="d-none d-sm-inline">Tambah Barang</span>
+        </button>
+        <button class="btn btn-outline-light btn-sm d-none" id="btnManageUsers" onclick="openUserManagement()"><i class="bi bi-people me-1"></i> <span class="d-none d-sm-inline">User</span></button>
+        <button class="btn btn-outline-light btn-sm" id="btnLogout"><i class="bi bi-box-arrow-right me-1"></i> <span class="d-none d-sm-inline">Keluar</span></button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="app-layout">
+    <aside class="offcanvas-lg offcanvas-start sidebar" tabindex="-1" id="sidebarNav" aria-labelledby="sidebarNavLabel">
+      <div class="offcanvas-header d-lg-none">
+        <h5 class="offcanvas-title" id="sidebarNavLabel"><i class="bi bi-box-seam me-2"></i>Menu</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+      </div>
+      <div class="offcanvas-body d-flex flex-column p-2 p-lg-3">
+        <div class="nav flex-column">
+          <span class="sidebar-heading">Gudang & Stok</span>
+          <button class="nav-link active" id="btnShowStock" onclick="showView('stockView')"><i class="bi bi-boxes"></i> Stok Barang</button>
+          <button class="nav-link" id="btnShowPurchase" onclick="showView('purchaseView')"><i class="bi bi-truck"></i> Pembelian</button>
+          <button class="nav-link" id="btnShowOpname" onclick="showView('opnameView')"><i class="bi bi-clipboard-check"></i> Stok Opname</button>
+          <button class="nav-link" id="btnShowPurchaseReturn" onclick="showView('purchaseReturnView'); loadReturnablePurchases()"><i class="bi bi-arrow-return-left"></i> Retur Beli</button>
+
+          <span class="sidebar-heading">Transaksi</span>
+          <button class="nav-link" id="btnShowKasir" onclick="showView('kasirView')"><i class="bi bi-cart3"></i> Kasir</button>
+          <button class="nav-link" id="btnShowPiutang" onclick="showView('piutangView'); loadReceivables()"><i class="bi bi-cash-coin"></i> Piutang</button>
+          <button class="nav-link" id="btnShowSalesReturn" onclick="showView('salesReturnView'); loadReturnableSales()"><i class="bi bi-receipt-cutoff"></i> Retur Jual</button>
+
+          <span class="sidebar-heading">Laporan</span>
+          <button class="nav-link" id="btnShowCashierReport" onclick="showView('cashierReportView'); loadCashierReport()"><i class="bi bi-bar-chart"></i> Laporan Penjualan</button>
+          <button class="nav-link" id="btnShowReport" onclick="showView('reportView'); loadReport()"><i class="bi bi-graph-up"></i> Laporan</button>
+          <button class="nav-link d-none" id="btnShowTopSelling" onclick="showView('topSellingView'); loadTopSellingReport()"><i class="bi bi-trophy"></i> Barang Terlaris</button>
+
+          <span class="sidebar-heading d-none" id="adminSidebarHeading">Administrasi</span>
+          <button class="nav-link d-none" id="btnMasterData" onclick="showView('masterView'); loadMasterData()"><i class="bi bi-people"></i> Data Master</button>
+          <button class="nav-link d-none" id="btnSettings" onclick="showView('settingsView'); loadSettings()"><i class="bi bi-gear"></i> Pengaturan</button>
+        </div>
+      </div>
+    </aside>
+
+  <main class="main-content">
+      <!-- Menu HTML dimuat dari file di folder pages. -->
+    <div id="menuViews"></div>
+
+  </main>
+  </div>
+
+  <div class="modal fade" id="modalSupplier" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog"><div class="modal-content">
+      <form id="formSupplier">
+        <div class="modal-header"><h5 class="modal-title fw-bold">Tambah Supplier</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+        <div class="modal-body">
+          <div class="mb-2"><label for="supplierCode" class="form-label small">Kode supplier</label><input id="supplierCode" class="form-control form-control-sm" maxlength="15" required></div>
+          <div class="mb-2"><label for="supplierName" class="form-label small">Nama supplier</label><input id="supplierName" class="form-control form-control-sm" maxlength="30" required></div>
+          <div class="mb-2"><label for="supplierAddress" class="form-label small">Alamat</label><input id="supplierAddress" class="form-control form-control-sm" maxlength="40"></div>
+          <div class="mb-2"><label for="supplierPhone" class="form-label small">Telepon</label><input id="supplierPhone" class="form-control form-control-sm" maxlength="15"></div>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-sm btn-primary">Simpan Supplier</button></div>
+      </form>
+    </div></div>
+  </div>
+
+  <!-- Modal Tambah / Edit Barang -->
+  <div class="modal fade" id="modalBarang" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down" style="max-width:560px">
+      <div class="modal-content">
+        <div class="modal-header py-2 px-3">
+          <h6 class="modal-title fw-bold mb-0" id="modalBarangTitle">Tambah Barang Baru</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="d-flex justify-content-between align-items-center px-3 py-2 small border-bottom" aria-live="polite">
+          <span>Kode: <strong class="text-info" id="inputKdBar">Pilih kelompok</strong></span>
+          <span>Markup: <strong id="inputMarkup">0%</strong></span>
+        </div>
+        <div class="modal-body px-3 py-2">
+          <form id="formBarang">
+            <div class="row g-2">
+              <div class="col-8">
+                <label for="inputKdKel" class="form-label fw-semibold small mb-0">Kelompok <span class="text-danger">*</span></label>
+                <select id="inputKdKel" class="form-select form-select-sm" required>
+                  <option value="">Pilih kelompok</option>
+                </select>
+              </div>
+              <div class="col-4">
+                <label for="inputSatKecil" class="form-label fw-semibold small mb-0">Satuan</label>
+                <input type="text" id="inputSatKecil" class="form-control form-control-sm" value="PCS" enterkeyhint="next">
+              </div>
+<div class="col-12">
+                <label for="inputBarcode" class="form-label fw-semibold small mb-0">Barcode</label>
+                <input type="text" id="inputBarcode" class="form-control form-control-sm" placeholder="Scan / isi barcode" enterkeyhint="next">
+              </div>
+              <div class="col-12">
+                <label for="inputNmbar" class="form-label fw-semibold small mb-0">Nama Barang <span class="text-danger">*</span></label>
+                <input type="text" id="inputNmbar" class="form-control form-control-sm" required placeholder="Nama produk..." autocomplete="off" enterkeyhint="next">
+              </div>
+              <div class="col-6">
+                <label for="inputHBeli" class="form-label fw-semibold small mb-0">Harga Beli</label>
+                <input type="number" step="0.01" inputmode="decimal" id="inputHBeli" class="form-control form-control-sm" value="0" enterkeyhint="next">
+              </div>
+              <div class="col-6">
+                <label for="inputHJual" class="form-label fw-semibold small mb-0">Harga Jual</label>
+                <input type="number" step="0.01" inputmode="decimal" id="inputHJual" class="form-control form-control-sm" value="0" enterkeyhint="next">
+              </div>
+              <div class="col-6">
+                <label for="inputStAwal" class="form-label fw-semibold small mb-0">Stok Awal</label>
+                <input type="number" step="0.01" inputmode="decimal" id="inputStAwal" class="form-control form-control-sm" value="0" enterkeyhint="next">
+              </div>
+              <div class="col-6">
+                <label for="inputKdSupp" class="form-label fw-semibold small mb-0">Supplier</label>
+                <input type="text" id="inputKdSupp" class="form-control form-control-sm" placeholder="opsional" enterkeyhint="next">
+              </div>
+              <input type="hidden" id="inputRak" value="0">
+              <input type="hidden" id="inputWarna" value="0">
+              <input type="hidden" id="inputUkuran" value="0">
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer py-2 px-3">
+          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" form="formBarang" class="btn btn-sm btn-primary" id="btnSaveBarang">Simpan</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalUsers" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg"><div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title fw-bold">Pengelolaan User</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+      <div class="modal-body">
+        <div class="table-responsive mb-3"><table class="table table-sm align-middle"><thead class="table-light"><tr><th>Kode</th><th>Nama</th><th>Role</th><th>Status</th><th></th></tr></thead><tbody id="usersTableBody"></tbody></table></div>
+        <hr>
+        <h6 id="userFormTitle" class="fw-bold">Tambah User</h6>
+        <form id="userManagementForm"><div class="row g-2">
+          <div class="col-md-3"><label for="managedUserCode" class="form-label small">Kode (maks. 5)</label><input id="managedUserCode" class="form-control form-control-sm" maxlength="5" required></div>
+          <div class="col-md-3"><label for="managedUserName" class="form-label small">Nama</label><input id="managedUserName" class="form-control form-control-sm" maxlength="20" required></div>
+          <div class="col-md-3"><label for="managedUserRole" class="form-label small">Role</label><select id="managedUserRole" class="form-select form-select-sm"><option value="kasir">Kasir</option><option value="gudang">Admin Gudang</option><option value="bos">Bos</option><option value="admin">Admin</option></select></div>
+          <div class="col-md-3"><label for="managedUserActive" class="form-label small">Status</label><select id="managedUserActive" class="form-select form-select-sm"><option value="Y">Aktif</option><option value="N">Nonaktif</option></select></div>
+          <div class="col-md-8"><label for="managedUserPassword" class="form-label small">Password baru (min. 3 karakter)</label><input id="managedUserPassword" type="password" class="form-control form-control-sm" minlength="3" autocomplete="new-password"></div>
+          <div class="col-md-4 d-flex align-items-end gap-2"><button id="saveManagedUser" type="submit" class="btn btn-sm btn-primary">Tambah User</button><button id="cancelEditUser" type="button" class="btn btn-sm btn-outline-secondary d-none" onclick="resetUserForm()">Batal</button></div>
+        </div></form>
+      </div>
+    </div></div>
+  </div>
+  <section id="receiptPrint" aria-hidden="true"></section>
+  </div>
+
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+  <!-- Bootstrap 5 JS Bundle CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Script Logic Application -->
+  <script>
+    let currentPage = 1;
+    let modalInstance = null;
+    let supplierModalInstance = null;
+    let usersModalInstance = null;
+    let currentUser = null;
+    let editingManagedUserCode = null;
+    let businessSettings = {};
+    let itemsCache = {};
+    let kelompokOptions = [];
+    let editingKdBar = null;
+    let kdBarPreviewRequest = 0;
+    let cashierSalesChart = null;
+    let cashierHourlyChart = null;
+    let lastCashierReport = null;
+    let lastTopSellingReport = null;
+    const excelFields = ['KdBar', 'Barcode', 'KdKel', 'Nmbar', 'SatKecil', 'HBeli', 'HJual', 'StAwal', 'RAK', 'KDSUPP', 'WARNA', 'UKURAN'];
+    const salesCart = new Map();
+    const purchaseCart = new Map();
+    const opnameCart = new Map();
+    let currentPendingNo = null;
+    let latestProductResults = [];
+    let productSearchTimer = null;
+    let purchaseSearchTimer = null;
+    let opnameSearchTimer = null;
+    let editingGroupCode = null;
+    let editingMemberCode = null;
+    let editingMasterSupplierCode = null;
+    let currentReturnPurchase = null;
+    let purchaseReturnLines = new Map();
+    let currentReturnSale = null;
+    let salesReturnLines = new Map();
+    const nativeFetch = window.fetch.bind(window);
+
+    window.fetch = async (resource, options) => {
+      const response = await nativeFetch(resource, options);
+      const requestUrl = typeof resource === 'string' ? resource : resource.url;
+      if (response.status === 401 && !requestUrl.includes('/api/auth/')) {
+        currentUser = null;
+        salesCart.clear();
+        purchaseCart.clear();
+        opnameCart.clear();
+        currentPendingNo = null;
+        setAuthMode(false);
+        showAuthenticationError('Sesi login berakhir. Silakan masuk kembali.');
+        loadLoginUsers().catch(err => showAuthenticationError(err.message));
+      }
+      return response;
+    };
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        await loadMenuViews();
+      } catch (err) {
+        showAuthenticationError(`Gagal memuat halaman menu: ${err.message}`);
+        return;
+      }
+
+      modalInstance = new bootstrap.Modal(document.getElementById('modalBarang'));
+      const modalBarangEl = document.getElementById('modalBarang');
+      ['inputHBeli', 'inputHJual', 'inputStAwal'].forEach(id => {
+        document.getElementById(id).addEventListener('focus', e => e.target.select());
+      });
+      modalBarangEl.addEventListener('shown.bs.modal', () => {
+        const kel = document.getElementById('inputKdKel');
+        (kel.value ? document.getElementById('inputNmbar') : kel).focus();
+      });
+      supplierModalInstance = new bootstrap.Modal(document.getElementById('modalSupplier'));
+      usersModalInstance = new bootstrap.Modal(document.getElementById('modalUsers'));
+
+      // Fitur pencarian otomatis
+      ['searchName', 'searchBarcode', 'searchKdBar', 'filterKdKel', 'filterRak'].forEach(id => {
+        document.getElementById(id).addEventListener('input', () => {
+          currentPage = 1;
+          loadDataBarang();
+        });
+      });
+
+      document.getElementById('inputKdKel').addEventListener('change', () => {
+        updateNextKdBar();
+      });
+
+      // Recalculate markup otomatis
+      document.getElementById('inputHBeli').addEventListener('input', updateModalMarkup);
+      document.getElementById('inputHJual').addEventListener('input', updateModalMarkup);
+      document.getElementById('excelFile').addEventListener('change', importExcel);
+      document.getElementById('formSupplier').addEventListener('submit', saveSupplier);
+      document.getElementById('loginForm').addEventListener('submit', loginUser);
+      document.getElementById('setupForm').addEventListener('submit', setupFirstAdmin);
+      document.getElementById('userManagementForm').addEventListener('submit', saveManagedUser);
+      document.getElementById('groupForm').addEventListener('submit', saveGroup);
+      document.getElementById('memberForm').addEventListener('submit', saveMember);
+      document.getElementById('masterSupplierForm').addEventListener('submit', saveMasterSupplier);
+      document.getElementById('settingsForm').addEventListener('submit', saveSettings);
+      document.getElementById('btnLogout').addEventListener('click', logoutUser);
+      document.getElementById('returnSourceInvoice').addEventListener('change', event => loadPurchaseReturn(event.target.value));
+      document.getElementById('returnSourceSale').addEventListener('change', event => loadSalesReturn(event.target.value));
+      document.getElementById('saleCustomer').addEventListener('change', () => {
+        const selected = document.getElementById('saleCustomer').selectedOptions[0];
+        if (Number(selected?.dataset.discount) > 0 && Number(document.getElementById('saleDiscount').value) === 0) {
+          document.getElementById('saleDiscount').value = selected.dataset.discount;
+        }
+        updateSaleTotals();
+      });
+      document.getElementById('setupCode').addEventListener('input', () => {
+        const code = document.getElementById('setupCode').value;
+        const selected = [...document.querySelectorAll('#legacyUserCodes option')].find(option => option.value === code);
+        if (selected) document.getElementById('setupName').value = selected.dataset.name || '';
+      });
+      document.getElementById('searchProduct').addEventListener('input', event => {
+        clearTimeout(productSearchTimer);
+        const search = event.target.value.trim();
+        productSearchTimer = setTimeout(() => searchProducts(search), 180);
+      });
+      document.getElementById('searchProduct').addEventListener('keydown', event => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          handleProductScan(event.target.value.trim());
+        }
+      });
+      document.getElementById('purchaseSearch').addEventListener('input', event => {
+        clearTimeout(purchaseSearchTimer);
+        const search = event.target.value.trim();
+        purchaseSearchTimer = setTimeout(() => searchPurchaseProducts(search), 180);
+      });
+      document.getElementById('opnameSearch').addEventListener('input', event => {
+        clearTimeout(opnameSearchTimer);
+        const search = event.target.value.trim();
+        opnameSearchTimer = setTimeout(() => searchOpnameProducts(search), 180);
+      });
+      ['purchaseTax', 'purchaseExtra', 'purchasePaid'].forEach(id => {
+        document.getElementById(id).addEventListener('input', updatePurchaseTotal);
+      });
+      const today = new Date().toISOString().slice(0, 10);
+      document.getElementById('purchaseDate').value = today;
+      document.getElementById('reportFrom').value = today;
+      document.getElementById('reportTo').value = today;
+      document.getElementById('cashierReportFrom').value = today;
+      document.getElementById('cashierReportTo').value = today;
+      document.getElementById('topSellingFrom').value = today;
+      document.getElementById('topSellingTo').value = today;
+      document.getElementById('opnameDate').value = today;
+      document.getElementById('returnPurchaseDate').value = today;
+      document.getElementById('returnSaleDate').value = today;
+      ['saleDiscount', 'cashReceived', 'paymentMethod', 'saleCustomer'].forEach(id => {
+        document.getElementById(id).addEventListener('input', updateSaleTotals);
+        document.getElementById(id).addEventListener('change', updateSaleTotals);
+      });
+      await initializeAuthentication();
+    });
+
+    async function loadMenuViews() {
+      const menuPages = [
+        'master-data.html',
+        'settings.html',
+        'purchase-return.html',
+        'sales-return.html',
+        'piutang.html',
+        'purchase.html',
+        'stock-opname.html',
+        'sales-report.html',
+        'report.html',
+        'top-selling.html',
+        'kasir.html',
+        'stock.html'
+      ];
+      const pages = await Promise.all(menuPages.map(async page => {
+        const response = await fetch(`/pages/${page}`);
+        if (!response.ok) throw new Error(`${page} (HTTP ${response.status})`);
+        return response.text();
+      }));
+      document.getElementById('menuViews').innerHTML = pages.join('\n');
+    }
+
+    function showAuthenticationError(message) {
+      const error = document.getElementById('authError');
+      error.textContent = message;
+      error.classList.remove('d-none');
+    }
+
+    function setAuthMode(setupMode) {
+      document.getElementById('loginForm').classList.toggle('d-none', setupMode);
+      document.getElementById('setupForm').classList.toggle('d-none', !setupMode);
+      document.getElementById('authError').classList.add('d-none');
+      document.getElementById('authScreen').classList.remove('d-none');
+      document.getElementById('appShell').classList.add('d-none');
+    }
+
+    async function initializeAuthentication() {
+      try {
+        const response = await fetch('/api/auth/me');
+        if (response.ok) {
+          const result = await response.json();
+          enterAuthenticatedApp(result.user);
+          return;
+        }
+
+        const statusResponse = await fetch('/api/auth/setup-status');
+        const status = await statusResponse.json();
+        if (!statusResponse.ok) throw new Error(status.message || 'Gagal memeriksa status login.');
+        if (status.setupRequired) {
+          const list = document.getElementById('legacyUserCodes');
+          list.replaceChildren();
+          status.users.forEach(user => {
+            const option = document.createElement('option');
+            option.value = user.KdUser;
+            option.dataset.name = user.Nmuser;
+            list.appendChild(option);
+          });
+          document.getElementById('setupCode').value = status.users[0]?.KdUser || 'BOS';
+          document.getElementById('setupName').value = status.users[0]?.Nmuser || 'ADMINISTRATOR';
+          setAuthMode(true);
+        } else {
+          await loadLoginUsers();
+          setAuthMode(false);
+        }
+      } catch (err) {
+        setAuthMode(false);
+        showAuthenticationError(err.message || 'Server login tidak dapat dihubungi.');
+      }
+    }
+
+    async function loadLoginUsers() {
+      const select = document.getElementById('loginCode');
+      try {
+        const response = await fetch('/api/auth/users');
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message || 'Gagal memuat user.');
+        select.replaceChildren();
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = result.data.length ? 'Pilih user' : 'Belum ada user aktif';
+        select.appendChild(placeholder);
+        result.data.forEach(user => {
+          const option = document.createElement('option');
+          option.value = user.KdUser;
+          option.textContent = `${user.Nmuser} (${user.KdUser})`;
+          select.appendChild(option);
+        });
+        select.disabled = result.data.length === 0;
+      } catch (err) {
+        select.replaceChildren(new Option('Gagal memuat user', ''));
+        select.disabled = true;
+        throw err;
+      }
+    }
+
+    function enterAuthenticatedApp(user) {
+      currentUser = user;
+      document.getElementById('authScreen').classList.add('d-none');
+      document.getElementById('appShell').classList.remove('d-none');
+      document.getElementById('currentUserLabel').textContent = `${user.Nmuser} (${user.KdUser})`;
+      const manager = ['admin', 'bos'].includes(user.Role);
+      const cashier = ['admin', 'bos', 'kasir'].includes(user.Role);
+      const warehouse = ['admin', 'bos', 'gudang'].includes(user.Role);
+      document.getElementById('btnManageUsers').classList.toggle('d-none', !manager);
+      document.getElementById('btnMasterData').classList.toggle('d-none', !manager);
+      document.getElementById('btnSettings').classList.toggle('d-none', !manager);
+      document.getElementById('adminSidebarHeading').classList.toggle('d-none', !manager);
+      document.getElementById('btnShowKasir').classList.toggle('d-none', !cashier);
+      document.getElementById('btnShowPiutang').classList.toggle('d-none', !cashier);
+      document.getElementById('btnShowReport').classList.toggle('d-none', !manager);
+      document.getElementById('btnShowTopSelling').classList.toggle('d-none', !manager);
+      document.getElementById('btnShowCashierReport').classList.toggle('d-none', !cashier);
+      document.getElementById('btnShowPurchase').classList.toggle('d-none', !warehouse);
+      document.getElementById('btnShowOpname').classList.toggle('d-none', !warehouse);
+      document.getElementById('btnShowPurchaseReturn').classList.toggle('d-none', !warehouse);
+      document.getElementById('btnShowSalesReturn').classList.toggle('d-none', !cashier);
+      document.getElementById('btnAddProduct').classList.toggle('d-none', !warehouse);
+      loadOptions();
+      loadDataBarang();
+      if (warehouse) loadSuppliers();
+      if (cashier) {
+        loadMembers();
+      }
+      loadBusinessSettings();
+    }
+
+    async function loginUser(event) {
+      event.preventDefault();
+      const button = document.getElementById('loginButton');
+      button.disabled = true;
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ KdUser: document.getElementById('loginCode').value.trim(), password: document.getElementById('loginPassword').value })
+        });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message || 'Login gagal.');
+        document.getElementById('loginPassword').value = '';
+        enterAuthenticatedApp(result.user);
+      } catch (err) {
+        showAuthenticationError(err.message);
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    async function setupFirstAdmin(event) {
+      event.preventDefault();
+      const button = document.getElementById('setupButton');
+      button.disabled = true;
+      try {
+        const response = await fetch('/api/auth/setup', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            setupToken: document.getElementById('setupToken').value.trim(),
+            KdUser: document.getElementById('setupCode').value.trim(),
+            Nmuser: document.getElementById('setupName').value.trim(),
+            password: document.getElementById('setupPassword').value
+          })
+        });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message || 'Setup admin gagal.');
+        document.getElementById('setupToken').value = '';
+        document.getElementById('setupPassword').value = '';
+        enterAuthenticatedApp(result.user);
+      } catch (err) {
+        showAuthenticationError(err.message);
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    async function logoutUser() {
+      try {
+        await fetch('/api/auth/logout', { method: 'POST' });
+      } finally {
+        currentUser = null;
+        salesCart.clear();
+        purchaseCart.clear();
+        opnameCart.clear();
+        currentPendingNo = null;
+        setAuthMode(false);
+        document.getElementById('loginPassword').value = '';
+        await loadLoginUsers().catch(err => showAuthenticationError(err.message));
+      }
+    }
+
+    async function openUserManagement() {
+      if (!currentUser || !['admin', 'bos'].includes(currentUser.Role)) return;
+      resetUserForm();
+      usersModalInstance.show();
+      await loadManagedUsers();
+    }
+
+    async function loadManagedUsers() {
+      try {
+        const response = await fetch('/api/users');
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message || 'Gagal memuat user.');
+        const body = document.getElementById('usersTableBody');
+        body.replaceChildren();
+        result.data.forEach(user => {
+          const row = body.insertRow();
+          [user.KdUser, user.Nmuser, ({ admin: 'Admin', bos: 'Bos', kasir: 'Kasir', gudang: 'Admin Gudang' })[user.Role] || user.Role, user.IsActive === 'Y' ? 'Aktif' : 'Nonaktif'].forEach(value => {
+            row.insertCell().textContent = value;
+          });
+          const actionCell = row.insertCell();
+          const edit = document.createElement('button');
+          edit.type = 'button'; edit.className = 'btn btn-sm btn-outline-primary'; edit.textContent = 'Ubah';
+          edit.addEventListener('click', () => editManagedUser(user));
+          actionCell.appendChild(edit);
+        });
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    function resetUserForm() {
+      editingManagedUserCode = null;
+      document.getElementById('userManagementForm').reset();
+      document.getElementById('managedUserCode').readOnly = false;
+      document.getElementById('managedUserActive').value = 'Y';
+      document.getElementById('managedUserPassword').required = true;
+      document.getElementById('userFormTitle').textContent = 'Tambah User';
+      document.getElementById('saveManagedUser').textContent = 'Tambah User';
+      document.getElementById('cancelEditUser').classList.add('d-none');
+    }
+
+    function editManagedUser(user) {
+      editingManagedUserCode = user.KdUser;
+      document.getElementById('managedUserCode').value = user.KdUser;
+      document.getElementById('managedUserCode').readOnly = true;
+      document.getElementById('managedUserName').value = user.Nmuser;
+      document.getElementById('managedUserRole').value = user.Role;
+      document.getElementById('managedUserActive').value = user.IsActive;
+      document.getElementById('managedUserPassword').value = '';
+      document.getElementById('managedUserPassword').required = false;
+      document.getElementById('userFormTitle').textContent = `Ubah User: ${user.KdUser}`;
+      document.getElementById('saveManagedUser').textContent = 'Simpan Perubahan';
+      document.getElementById('cancelEditUser').classList.remove('d-none');
+    }
+
+    async function saveManagedUser(event) {
+      event.preventDefault();
+      const payload = {
+        KdUser: document.getElementById('managedUserCode').value.trim(),
+        Nmuser: document.getElementById('managedUserName').value.trim(),
+        Role: document.getElementById('managedUserRole').value,
+        IsActive: document.getElementById('managedUserActive').value,
+        password: document.getElementById('managedUserPassword').value
+      };
+      const editing = Boolean(editingManagedUserCode);
+      try {
+        const response = await fetch(editing ? `/api/users/${encodeURIComponent(editingManagedUserCode)}` : '/api/users', {
+          method: editing ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message || 'Gagal menyimpan user.');
+        resetUserForm();
+        await loadManagedUsers();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function loadReceivables() {
+      const body = document.getElementById('receivableBody');
+      body.replaceChildren();
+      try {
+        const response = await fetch('/api/piutang');
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message);
+        result.data.forEach(item => {
+          const row = body.insertRow();
+          [item.NmAng || item.KdAng, item.NoFak, String(item.Tgl).slice(0, 10)].forEach(value => { row.insertCell().textContent = value || '-'; });
+          const total = row.insertCell(); total.className = 'text-end'; total.textContent = formatRupiah(item.Total);
+          const balance = row.insertCell(); balance.className = 'text-end fw-bold'; balance.textContent = formatRupiah(item.Balance);
+          const paymentCell = row.insertCell();
+          const group = document.createElement('div'); group.className = 'input-group input-group-sm';
+          const input = document.createElement('input'); input.type = 'number'; input.min = '0.01'; input.step = '0.01';
+          input.max = item.Balance; input.className = 'form-control'; input.placeholder = 'Jumlah'; input.setAttribute('aria-label', `Pelunasan ${item.NoFak}`);
+          const button = document.createElement('button'); button.type = 'button'; button.className = 'btn btn-outline-success'; button.textContent = 'Bayar';
+          button.addEventListener('click', () => settleReceivable(item, input, button));
+          group.append(input, button); paymentCell.appendChild(group);
+        });
+        if (!result.data.length) {
+          const row = body.insertRow(); const cell = row.insertCell(); cell.colSpan = 6;
+          cell.className = 'text-center text-muted py-4'; cell.textContent = 'Tidak ada piutang terbuka.';
+        }
+      } catch (err) { alert(err.message); }
+    }
+
+    async function settleReceivable(item, input, button) {
+      const amount = Number(input.value);
+      if (!Number.isFinite(amount) || amount <= 0) return alert('Masukkan jumlah pelunasan.');
+      if (amount > Number(item.Balance)) return alert('Pembayaran melebihi saldo piutang.');
+      button.disabled = true;
+      try {
+        const response = await fetch('/api/piutang/bayar', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ KdAng: item.KdAng, NoFak: item.NoFak, Bayar: amount })
+        });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message);
+        alert(`${result.message} Sisa: ${formatRupiah(result.remaining)}.`);
+        await loadReceivables();
+        await loadMembers();
+      } catch (err) { alert(err.message); button.disabled = false; }
+    }
+
+    const sidebarNavButtonByView = {
+      stockView: 'btnShowStock', kasirView: 'btnShowKasir', piutangView: 'btnShowPiutang',
+      purchaseView: 'btnShowPurchase', opnameView: 'btnShowOpname', reportView: 'btnShowReport',
+      cashierReportView: 'btnShowCashierReport', masterView: 'btnMasterData', settingsView: 'btnSettings',
+      purchaseReturnView: 'btnShowPurchaseReturn', salesReturnView: 'btnShowSalesReturn',
+      topSellingView: 'btnShowTopSelling'
+    };
+
+    function showView(viewId) {
+      Object.keys(sidebarNavButtonByView).forEach(id => {
+        document.getElementById(id).classList.toggle('d-none', id !== viewId);
+      });
+      document.querySelectorAll('#sidebarNav .nav-link').forEach(link => link.classList.remove('active'));
+      const activeLink = document.getElementById(sidebarNavButtonByView[viewId]);
+      if (activeLink) activeLink.classList.add('active');
+      if (viewId === 'kasirView') document.getElementById('searchProduct').focus();
+      if (viewId === 'purchaseView') document.getElementById('purchaseSearch').focus();
+      if (viewId === 'opnameView') document.getElementById('opnameSearch').focus();
+      if (viewId === 'purchaseReturnView') loadReturnablePurchases();
+      const sidebarOffcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('sidebarNav'));
+      if (sidebarOffcanvas) sidebarOffcanvas.hide();
+    }
+
+    async function searchOpnameProducts(search) {
+      const resultList = document.getElementById('opnameResults');
+      resultList.replaceChildren();
+      if (!search) return;
+      try {
+        const response = await fetch(`/api/cari-barang?q=${encodeURIComponent(search)}`);
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message);
+        result.data.forEach(item => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'list-group-item list-group-item-action d-flex justify-content-between';
+          button.textContent = `${item.Nmbar} · ${item.KdBar} · stok ${formatNumber(item.Stok)}`;
+          button.addEventListener('click', () => addToOpname(item));
+          resultList.appendChild(button);
+        });
+      } catch (err) {
+        console.error('Gagal mencari barang opname:', err);
+      }
+    }
+
+    function addToOpname(item) {
+      if (!opnameCart.has(item.KdBar)) opnameCart.set(item.KdBar, { ...item, StOpname: Number(item.Stok) || 0 });
+      document.getElementById('opnameSearch').value = '';
+      document.getElementById('opnameResults').replaceChildren();
+      renderOpnameCart();
+    }
+
+    function renderOpnameCart() {
+      const body = document.getElementById('opnameCartBody');
+      body.replaceChildren();
+      opnameCart.forEach(item => {
+        const row = body.insertRow();
+        row.insertCell().textContent = `${item.Nmbar} (${item.KdBar})`;
+        const systemCell = row.insertCell();
+        systemCell.className = 'text-end';
+        systemCell.textContent = formatNumber(item.Stok);
+        const countCell = row.insertCell();
+        const input = document.createElement('input');
+        input.type = 'number'; input.min = '0'; input.step = '0.001'; input.value = item.StOpname;
+        input.className = 'form-control form-control-sm text-end';
+        input.addEventListener('change', () => {
+          const value = Number(input.value);
+          if (!Number.isFinite(value) || value < 0) return;
+          item.StOpname = value;
+          renderOpnameCart();
+        });
+        countCell.appendChild(input);
+        const differenceCell = row.insertCell();
+        differenceCell.className = 'text-end';
+        differenceCell.textContent = formatNumber(Number(item.Stok) - item.StOpname);
+        const removeCell = row.insertCell();
+        const remove = document.createElement('button');
+        remove.type = 'button'; remove.className = 'btn btn-sm btn-outline-danger'; remove.title = 'Hapus dari daftar opname';
+        remove.innerHTML = '<i class="bi bi-x-lg"></i>';
+        remove.addEventListener('click', () => { opnameCart.delete(item.KdBar); renderOpnameCart(); });
+        removeCell.appendChild(remove);
+      });
+      document.getElementById('btnSaveOpname').disabled = !opnameCart.size;
+    }
+
+    async function saveOpname() {
+      if (!opnameCart.size) return;
+      const button = document.getElementById('btnSaveOpname');
+      button.disabled = true;
+      try {
+        const response = await fetch('/api/opname', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ Tgl: document.getElementById('opnameDate').value, items: [...opnameCart.values()].map(item => ({ KdBar: item.KdBar, StOpname: item.StOpname })) })
+        });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message || 'Gagal menyimpan opname.');
+        alert(`${result.message} Barang dengan selisih: ${result.adjusted}.`);
+        opnameCart.clear();
+        renderOpnameCart();
+        loadDataBarang();
+      } catch (err) {
+        alert(err.message);
+        button.disabled = !opnameCart.size;
+      }
+    }
+
+    async function loadSuppliers(selectedCode = '') {
+      try {
+        const response = await fetch('/api/supplier');
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message);
+        const select = document.getElementById('purchaseSupplier');
+        select.replaceChildren(select.options[0]);
+        result.data.forEach(supplier => {
+          const option = document.createElement('option');
+          option.value = supplier.KdSupp;
+          option.textContent = `${supplier.NmSupp} (${supplier.KdSupp})`;
+          select.appendChild(option);
+        });
+        if (selectedCode) select.value = selectedCode;
+      } catch (err) {
+        console.error('Gagal memuat supplier:', err);
+      }
+    }
+
+    function openSupplierModal() {
+      document.getElementById('formSupplier').reset();
+      supplierModalInstance.show();
+    }
+
+    async function saveSupplier(event) {
+      event.preventDefault();
+      const payload = {
+        KdSupp: document.getElementById('supplierCode').value.trim(),
+        NmSupp: document.getElementById('supplierName').value.trim(),
+        AlSupp: document.getElementById('supplierAddress').value.trim(),
+        Telp: document.getElementById('supplierPhone').value.trim()
+      };
+      try {
+        const response = await fetch('/api/supplier', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message || 'Gagal menambah supplier.');
+        supplierModalInstance.hide();
+        await loadSuppliers(payload.KdSupp);
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function loadMembers() {
+      try {
+        const response = await fetch('/api/anggota');
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message);
+        const select = document.getElementById('saleCustomer');
+        select.replaceChildren(select.options[0]);
+        result.data.filter(member => member.MASAAKTIF !== 'N').forEach(member => {
+          const option = document.createElement('option');
+          option.value = member.KdAng;
+          option.textContent = `${member.NmAng} (${member.KdAng})`;
+          option.dataset.discount = member.Disc || 0;
+          option.dataset.creditLimit = member.Plafon || 0;
+          option.dataset.outstanding = member.GGantung || 0;
+          select.appendChild(option);
+        });
+      } catch (err) {
+        console.error('Gagal memuat anggota:', err);
+      }
+    }
+
+    async function loadMasterData() {
+      if (!currentUser || !['admin', 'bos'].includes(currentUser.Role)) return;
+      try {
+        const responses = await Promise.all([fetch('/api/kelompok'), fetch('/api/anggota'), fetch('/api/supplier')]);
+        const [groups, members, suppliers] = await Promise.all(responses.map(response => response.json()));
+        if (!groups.success || !members.success || !suppliers.success) throw new Error('Gagal memuat master data.');
+        renderMasterRows('groupTableBody', groups.data, item => [item.KDKEL, item.NMKEL], [
+          { label: 'Ubah', run: editGroup }, { label: 'Hapus', run: deleteGroup, className: 'btn-outline-danger' }
+        ]);
+        renderMasterRows('memberTableBody', members.data, item => [item.KdAng, item.NmAng, item.Telp || '-', `${item.Disc || 0}%`, item.MASAAKTIF === 'N' ? 'Nonaktif' : 'Aktif'], [
+          { label: 'Ubah', run: editMember },
+          { label: item => item.MASAAKTIF === 'N' ? 'Aktifkan' : 'Nonaktifkan', run: toggleMember, className: 'btn-outline-secondary' }
+        ]);
+        renderMasterRows('masterSupplierTableBody', suppliers.data, item => [item.KdSupp, item.NmSupp, item.Telp || '-'], [
+          { label: 'Ubah', run: editMasterSupplier }, { label: 'Hapus', run: deleteMasterSupplier, className: 'btn-outline-danger' }
+        ]);
+      } catch (err) { alert(err.message); }
+    }
+
+    function renderMasterRows(bodyId, data, valuesForRow, actions) {
+      const body = document.getElementById(bodyId);
+      body.replaceChildren();
+      data.forEach(item => {
+        const row = body.insertRow();
+        valuesForRow(item).forEach(value => { row.insertCell().textContent = value ?? '-'; });
+        const cell = row.insertCell();
+        const actionWrap = document.createElement('div');
+        actionWrap.className = 'd-flex flex-wrap justify-content-end gap-1';
+        actions.forEach(action => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = `btn btn-sm ${action.className || 'btn-outline-primary'}`;
+          button.textContent = typeof action.label === 'function' ? action.label(item) : action.label;
+          button.addEventListener('click', () => action.run(item));
+          actionWrap.appendChild(button);
+        });
+        cell.appendChild(actionWrap);
+      });
+      if (!data.length) {
+        const row = body.insertRow();
+        const cell = row.insertCell();
+        cell.colSpan = body.closest('table').tHead.rows[0].cells.length;
+        cell.className = 'text-center text-muted py-3';
+        cell.textContent = 'Belum ada data.';
+      }
+    }
+
+    function resetGroupForm() {
+      editingGroupCode = null;
+      document.getElementById('groupForm').reset();
+      document.getElementById('groupCode').readOnly = false;
+      document.getElementById('groupFormTitle').textContent = 'Tambah Kelompok';
+      document.getElementById('groupSaveButton').textContent = 'Simpan';
+      document.getElementById('groupCancelButton').classList.add('d-none');
+    }
+
+    function editGroup(item) {
+      editingGroupCode = item.KDKEL;
+      document.getElementById('groupCode').value = item.KDKEL;
+      document.getElementById('groupCode').readOnly = true;
+      document.getElementById('groupName').value = item.NMKEL || '';
+      document.getElementById('groupFormTitle').textContent = `Ubah Kelompok: ${item.KDKEL}`;
+      document.getElementById('groupSaveButton').textContent = 'Simpan Perubahan';
+      document.getElementById('groupCancelButton').classList.remove('d-none');
+    }
+
+    async function saveGroup(event) {
+      event.preventDefault();
+      const code = document.getElementById('groupCode').value.trim();
+      try {
+        const response = await fetch(editingGroupCode ? `/api/kelompok/${encodeURIComponent(code)}` : '/api/kelompok', {
+          method: editingGroupCode ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ KDKEL: code, NMKEL: document.getElementById('groupName').value.trim() })
+        });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message);
+        resetGroupForm(); await loadMasterData(); await loadOptions();
+      } catch (err) { alert(err.message); }
+    }
+
+    async function deleteGroup(item) {
+      if (!confirm(`Hapus kelompok ${item.NMKEL} (${item.KDKEL})?`)) return;
+      try {
+        const response = await fetch(`/api/kelompok/${encodeURIComponent(item.KDKEL)}`, { method: 'DELETE' });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message);
+        await loadMasterData(); await loadOptions();
+      } catch (err) { alert(err.message); }
+    }
+
+    function resetMemberForm() {
+      editingMemberCode = null;
+      document.getElementById('memberForm').reset();
+      document.getElementById('memberCode').readOnly = false;
+      document.getElementById('memberDiscount').value = '0';
+      document.getElementById('memberTerm').value = '0';
+      document.getElementById('memberLimit').value = '0';
+      document.getElementById('memberFormTitle').textContent = 'Tambah Anggota';
+      document.getElementById('memberSaveButton').textContent = 'Simpan';
+      document.getElementById('memberCancelButton').classList.add('d-none');
+    }
+
+    function editMember(item) {
+      editingMemberCode = item.KdAng;
+      document.getElementById('memberCode').value = item.KdAng;
+      document.getElementById('memberCode').readOnly = true;
+      document.getElementById('memberName').value = item.NmAng || '';
+      document.getElementById('memberPhone').value = item.Telp || '';
+      document.getElementById('memberCity').value = item.kota || '';
+      document.getElementById('memberAddress').value = item.AlAng || '';
+      document.getElementById('memberDiscount').value = item.Disc || 0;
+      document.getElementById('memberTerm').value = item.JTempo || 0;
+      document.getElementById('memberLimit').value = item.Plafon || 0;
+      document.getElementById('memberFormTitle').textContent = `Ubah Anggota: ${item.KdAng}`;
+      document.getElementById('memberSaveButton').textContent = 'Simpan Perubahan';
+      document.getElementById('memberCancelButton').classList.remove('d-none');
+    }
+
+    function memberPayload(status = 'Y') {
+      return {
+        NmAng: document.getElementById('memberName').value.trim(),
+        Telp: document.getElementById('memberPhone').value.trim(),
+        kota: document.getElementById('memberCity').value.trim(),
+        AlAng: document.getElementById('memberAddress').value.trim(),
+        Disc: Number(document.getElementById('memberDiscount').value) || 0,
+        JTempo: Number(document.getElementById('memberTerm').value) || 0,
+        Plafon: Number(document.getElementById('memberLimit').value) || 0,
+        MASAAKTIF: status
+      };
+    }
+
+    async function saveMember(event) {
+      event.preventDefault();
+      const payload = { ...memberPayload(), KdAng: document.getElementById('memberCode').value.trim() };
+      try {
+        const response = await fetch(editingMemberCode ? `/api/anggota/${encodeURIComponent(editingMemberCode)}` : '/api/anggota', {
+          method: editingMemberCode ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message);
+        resetMemberForm(); await loadMasterData(); await loadMembers();
+      } catch (err) { alert(err.message); }
+    }
+
+    async function toggleMember(item) {
+      const payload = { NmAng: item.NmAng, AlAng: item.AlAng, kota: item.kota, Telp: item.Telp, CPerson: item.CPerson,
+        Email: item.Email, Disc: item.Disc, JTempo: item.JTempo, Plafon: item.Plafon, MASAAKTIF: item.MASAAKTIF === 'N' ? 'Y' : 'N' };
+      try {
+        const response = await fetch(`/api/anggota/${encodeURIComponent(item.KdAng)}`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message);
+        await loadMasterData(); await loadMembers();
+      } catch (err) { alert(err.message); }
+    }
+
+    function resetMasterSupplierForm() {
+      editingMasterSupplierCode = null;
+      document.getElementById('masterSupplierForm').reset();
+      document.getElementById('masterSupplierCode').readOnly = false;
+      document.getElementById('supplierFormTitle').textContent = 'Tambah Supplier';
+      document.getElementById('masterSupplierSaveButton').textContent = 'Simpan';
+      document.getElementById('masterSupplierCancelButton').classList.add('d-none');
+    }
+
+    function editMasterSupplier(item) {
+      editingMasterSupplierCode = item.KdSupp;
+      document.getElementById('masterSupplierCode').value = item.KdSupp;
+      document.getElementById('masterSupplierCode').readOnly = true;
+      document.getElementById('masterSupplierName').value = item.NmSupp || '';
+      document.getElementById('masterSupplierPhone').value = item.Telp || '';
+      document.getElementById('masterSupplierAddress').value = item.AlSupp || '';
+      document.getElementById('supplierFormTitle').textContent = `Ubah Supplier: ${item.KdSupp}`;
+      document.getElementById('masterSupplierSaveButton').textContent = 'Simpan Perubahan';
+      document.getElementById('masterSupplierCancelButton').classList.remove('d-none');
+    }
+
+    async function saveMasterSupplier(event) {
+      event.preventDefault();
+      const code = document.getElementById('masterSupplierCode').value.trim();
+      try {
+        const response = await fetch(editingMasterSupplierCode ? `/api/supplier/${encodeURIComponent(code)}` : '/api/supplier', {
+          method: editingMasterSupplierCode ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ KdSupp: code, NmSupp: document.getElementById('masterSupplierName').value.trim(),
+            Telp: document.getElementById('masterSupplierPhone').value.trim(), AlSupp: document.getElementById('masterSupplierAddress').value.trim() })
+        });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message);
+        resetMasterSupplierForm(); await loadMasterData(); await loadSuppliers(code);
+      } catch (err) { alert(err.message); }
+    }
+
+    async function deleteMasterSupplier(item) {
+      if (!confirm(`Hapus supplier ${item.NmSupp} (${item.KdSupp})?`)) return;
+      try {
+        const response = await fetch(`/api/supplier/${encodeURIComponent(item.KdSupp)}`, { method: 'DELETE' });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message);
+        await loadMasterData(); await loadSuppliers();
+      } catch (err) { alert(err.message); }
+    }
+
+    async function loadSettings() {
+      try {
+        const response = await fetch('/api/pengaturan');
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message);
+        const data = result.data || {};
+        businessSettings = data;
+        const fields = { settingBusinessName: 'NmUsaha', settingPhone: 'NoTelp', settingAddress: 'ALUsaha', settingCountry: 'Negara',
+          settingCity: 'Kota', settingProvince: 'Propinsi', settingPostal: 'KodePos', settingFax: 'Nofax', settingNpwp: 'NPWP',
+          settingEmail: 'Email', settingWebsite: 'Hpage', settingTax: 'PPN', settingDiscount: 'DISC', settingQty: 'QTYJUAL',
+          settingReceiptHeader: 'Headjual', settingReceiptFooter: 'FootJual', settingReceiptFooter2: 'FootJual2', settingReceiptFooter3: 'FootJual3' };
+        Object.entries(fields).forEach(([inputId, field]) => { document.getElementById(inputId).value = data[field] ?? (['PPN', 'DISC', 'QTYJUAL'].includes(field) ? 0 : ''); });
+        document.getElementById('settingPrintSale').checked = data.CetJual === '1';
+        document.getElementById('settingPrintBarcode').checked = data.Barcode === '1';
+      } catch (err) { alert(err.message); }
+    }
+
+    async function loadBusinessSettings() {
+      try {
+        const response = await fetch('/api/pengaturan');
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message);
+        businessSettings = result.data || {};
+        document.getElementById('saleDiscount').value = Number(businessSettings.DISC) || 0;
+        document.getElementById('purchaseTax').value = Number(businessSettings.PPN) || 0;
+        updateSaleTotals();
+        updatePurchaseTotal();
+      } catch (err) {
+        console.error('Gagal memuat pengaturan usaha:', err);
+      }
+    }
+
+    async function saveSettings(event) {
+      event.preventDefault();
+      const payload = {
+        NmUsaha: document.getElementById('settingBusinessName').value.trim(), NoTelp: document.getElementById('settingPhone').value.trim(),
+        ALUsaha: document.getElementById('settingAddress').value.trim(), Negara: document.getElementById('settingCountry').value.trim(),
+        Kota: document.getElementById('settingCity').value.trim(), Propinsi: document.getElementById('settingProvince').value.trim(),
+        KodePos: document.getElementById('settingPostal').value.trim(), Nofax: document.getElementById('settingFax').value.trim(),
+        NPWP: document.getElementById('settingNpwp').value.trim(), Email: document.getElementById('settingEmail').value.trim(),
+        Hpage: document.getElementById('settingWebsite').value.trim(),
+        PPN: Number(document.getElementById('settingTax').value) || 0, DISC: Number(document.getElementById('settingDiscount').value) || 0,
+        QTYJUAL: Number(document.getElementById('settingQty').value) || 0, Headjual: document.getElementById('settingReceiptHeader').value.trim(),
+        FootJual: document.getElementById('settingReceiptFooter').value.trim(), FootJual2: document.getElementById('settingReceiptFooter2').value.trim(),
+        FootJual3: document.getElementById('settingReceiptFooter3').value.trim(), CetJual: document.getElementById('settingPrintSale').checked ? '1' : '0',
+        Barcode: document.getElementById('settingPrintBarcode').checked ? '1' : '0'
+      };
+      try {
+        const response = await fetch('/api/pengaturan', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message);
+        businessSettings = payload;
+        await loadBusinessSettings();
+        alert(result.message);
+      } catch (err) { alert(err.message); }
+    }
+
+    async function loadReturnablePurchases() {
+      const select = document.getElementById('returnSourceInvoice');
+      try {
+        const response = await fetch('/api/pembelian/recent');
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message);
+        select.replaceChildren(new Option('Pilih faktur', ''));
+        result.data.forEach(item => {
+          const option = document.createElement('option'); option.value = item.NoFak;
+          option.textContent = `${item.NoFak} · ${item.TglFak} · ${item.NmSupp || 'Supplier umum'} · ${formatRupiah(item.GTotal)}`;
+          select.appendChild(option);
+        });
+        document.getElementById('purchaseReturnBody').replaceChildren();
+        purchaseReturnLines.clear(); currentReturnPurchase = null; updatePurchaseReturnTotal();
+      } catch (err) { alert(err.message); }
+    }
+
+    async function loadPurchaseReturn(invoice) {
+      purchaseReturnLines.clear(); currentReturnPurchase = null;
+      document.getElementById('purchaseReturnBody').replaceChildren();
+      if (!invoice) return updatePurchaseReturnTotal();
+      try {
+        const response = await fetch(`/api/pembelian/${encodeURIComponent(invoice)}`);
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message);
+        currentReturnPurchase = result.data;
+        result.data.items.forEach(item => purchaseReturnLines.set(item.KdBar, { ...item, ReturnQty: 0 }));
+        renderPurchaseReturnLines(); document.getElementById('purchaseRefund').value = '0';
+      } catch (err) { alert(err.message); }
+    }
+
+    function renderPurchaseReturnLines() {
+      const body = document.getElementById('purchaseReturnBody'); body.replaceChildren();
+      purchaseReturnLines.forEach(item => {
+        const row = body.insertRow(); row.insertCell().textContent = `${item.NmBar} (${item.KdBar})`;
+        row.insertCell().textContent = formatNumber(item.Qty);
+        const remaining = Math.max(0, Number(item.Qty) - Number(item.QtyReturned));
+        row.insertCell().textContent = formatNumber(remaining);
+        const quantityCell = row.insertCell(); const input = document.createElement('input');
+        input.type = 'number'; input.min = '0'; input.max = remaining; input.step = '0.01'; input.value = item.ReturnQty;
+        input.className = 'form-control form-control-sm';
+        input.addEventListener('change', () => {
+          const value = Number(input.value);
+          if (!Number.isFinite(value) || value < 0 || value > remaining || Math.round(value * 100) / 100 !== value) {
+            alert('Qty retur melebihi sisa atau maksimal 2 desimal.'); input.value = item.ReturnQty; return;
+          }
+          item.ReturnQty = value; renderPurchaseReturnLines();
+        });
+        quantityCell.appendChild(input);
+        const amountCell = row.insertCell(); amountCell.className = 'text-end';
+        amountCell.textContent = formatRupiah(item.ReturnQty * Number(item.UnitCost || 0));
+      });
+      updatePurchaseReturnTotal();
+    }
+
+    function updatePurchaseReturnTotal() {
+      const subtotal = [...purchaseReturnLines.values()].reduce((total, item) => total + item.ReturnQty * Number(item.UnitCost || 0), 0);
+      const tax = currentReturnPurchase ? subtotal * Number(currentReturnPurchase.PPNPersen || 0) / 100 : 0;
+      document.getElementById('purchaseReturnTotal').textContent = formatRupiah(subtotal + tax);
+    }
+
+    async function savePurchaseReturn() {
+      if (!currentReturnPurchase) return alert('Pilih faktur pembelian asal.');
+      const items = [...purchaseReturnLines.values()].filter(item => item.ReturnQty > 0).map(item => ({ KdBar: item.KdBar, Qty: item.ReturnQty }));
+      if (!items.length) return alert('Isi jumlah barang yang diretur.');
+      const button = document.getElementById('savePurchaseReturn'); button.disabled = true;
+      try {
+        const response = await fetch('/api/retur-pembelian', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ SourceNoFak: currentReturnPurchase.NoFak, TglFak: document.getElementById('returnPurchaseDate').value,
+            Bayar: Number(document.getElementById('purchaseRefund').value) || 0, items })
+        });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message || 'Gagal menyimpan retur.');
+        alert(`${result.message} Total: ${formatRupiah(result.GTotal)}.`);
+        await loadPurchaseReturn(currentReturnPurchase.NoFak);
+      } catch (err) { alert(err.message); }
+      finally { button.disabled = false; }
+    }
+
+    async function loadReturnableSales() {
+      const select = document.getElementById('returnSourceSale');
+      try {
+        const response = await fetch('/api/penjualan/recent');
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message);
+        select.replaceChildren(new Option('Pilih faktur', ''));
+        result.data.forEach(sale => {
+          const key = JSON.stringify({ nofak: sale.nofak, tglfak: sale.tglfak, kdkasir: sale.kdkasir });
+          const option = document.createElement('option');
+          option.value = key;
+          option.textContent = `${sale.nofak} · ${sale.tglfak} · ${sale.kdkasir} · ${formatRupiah(sale.GTotal)}`;
+          select.appendChild(option);
+        });
+        salesReturnLines.clear(); currentReturnSale = null; renderSalesReturnLines();
+      } catch (err) { alert(err.message); }
+    }
+
+    async function loadSalesReturn(sourceKey) {
+      salesReturnLines.clear(); currentReturnSale = null;
+      if (!sourceKey) return renderSalesReturnLines();
+      try {
+        const source = JSON.parse(sourceKey);
+        const params = new URLSearchParams(source);
+        const response = await fetch(`/api/retur-penjualan/faktur?${params.toString()}`);
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message);
+        currentReturnSale = result.data;
+        result.data.items.forEach(item => salesReturnLines.set(item.KdBar, { ...item, ReturnQty: 0 }));
+        renderSalesReturnLines(); document.getElementById('salesRefund').value = '0';
+      } catch (err) { alert(err.message); }
+    }
+
+    function renderSalesReturnLines() {
+      const body = document.getElementById('salesReturnBody'); body.replaceChildren();
+      salesReturnLines.forEach(item => {
+        const row = body.insertRow(); row.insertCell().textContent = `${item.NmBar} (${item.KdBar})`;
+        row.insertCell().textContent = formatNumber(item.Qty);
+        const remaining = Math.max(0, Number(item.Qty) - Number(item.QtyReturned));
+        row.insertCell().textContent = formatNumber(remaining);
+        const quantityCell = row.insertCell(); const input = document.createElement('input');
+        input.type = 'number'; input.min = '0'; input.max = remaining; input.step = '0.001'; input.value = item.ReturnQty;
+        input.className = 'form-control form-control-sm';
+        input.addEventListener('change', () => {
+          const value = Number(input.value);
+          if (!Number.isFinite(value) || value < 0 || value > remaining || Math.round(value * 1000) / 1000 !== value) {
+            alert('Qty retur melebihi sisa atau maksimal 3 desimal.'); input.value = item.ReturnQty; return;
+          }
+          item.ReturnQty = value; renderSalesReturnLines();
+        });
+        quantityCell.appendChild(input);
+        const amountCell = row.insertCell(); amountCell.className = 'text-end';
+        amountCell.textContent = formatRupiah(item.ReturnQty * Number(item.UnitPrice || 0));
+      });
+      updateSalesReturnTotal();
+    }
+
+    function updateSalesReturnTotal() {
+      const total = [...salesReturnLines.values()].reduce((sum, item) => sum + item.ReturnQty * Number(item.UnitPrice || 0), 0);
+      document.getElementById('salesReturnTotal').textContent = formatRupiah(total);
+    }
+
+    async function saveSalesReturn() {
+      if (!currentReturnSale) return alert('Pilih faktur penjualan asal.');
+      const items = [...salesReturnLines.values()].filter(item => item.ReturnQty > 0)
+        .map(item => ({ KdBar: item.KdBar, Qty: item.ReturnQty }));
+      if (!items.length) return alert('Isi jumlah barang yang diretur.');
+      const button = document.getElementById('saveSalesReturn'); button.disabled = true;
+      try {
+        const response = await fetch('/api/retur-penjualan', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ SourceNoFak: currentReturnSale.nofak, SourceTgl: currentReturnSale.tglfak,
+            KdKasir: currentReturnSale.kdkasir, TglFak: document.getElementById('returnSaleDate').value,
+            Bayar: Number(document.getElementById('salesRefund').value) || 0, items })
+        });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message || 'Gagal menyimpan retur penjualan.');
+        alert(`${result.message} Total: ${formatRupiah(result.GTotal)}.`);
+        await loadSalesReturn(document.getElementById('returnSourceSale').value);
+      } catch (err) { alert(err.message); }
+      finally { button.disabled = false; }
+    }
+
+    async function searchPurchaseProducts(search) {
+      const resultList = document.getElementById('purchaseResults');
+      resultList.replaceChildren();
+      if (!search) return;
+      try {
+        const response = await fetch(`/api/cari-barang?q=${encodeURIComponent(search)}`);
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message);
+        result.data.forEach(item => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'list-group-item list-group-item-action d-flex justify-content-between';
+          button.textContent = `${item.Nmbar} · ${item.KdBar} · harga beli ${formatRupiah(item.HBeli)}`;
+          button.addEventListener('click', () => addToPurchaseCart(item));
+          resultList.appendChild(button);
+        });
+      } catch (err) {
+        console.error('Gagal mencari barang pembelian:', err);
+      }
+    }
+
+    function addToPurchaseCart(item) {
+      if (!purchaseCart.has(item.KdBar)) purchaseCart.set(item.KdBar, { ...item, Qty: 1, PurchasePrice: Number(item.HBeli) || 0, Disc: 0 });
+      document.getElementById('purchaseSearch').value = '';
+      document.getElementById('purchaseResults').replaceChildren();
+      renderPurchaseCart();
+    }
+
+    function renderPurchaseCart() {
+      const body = document.getElementById('purchaseCartBody');
+      body.replaceChildren();
+      purchaseCart.forEach(item => {
+        const row = body.insertRow();
+        row.insertCell().textContent = `${item.Nmbar} (${item.KdBar})`;
+        [['Qty', '0.001', '0.001'], ['PurchasePrice', '0', '0.01'], ['Disc', '0', '0.01']].forEach(([field, min, step]) => {
+          const cell = row.insertCell();
+          const input = document.createElement('input');
+          input.type = 'number'; input.min = min; input.step = step; input.value = item[field];
+          input.className = 'form-control form-control-sm';
+          input.addEventListener('change', () => {
+            const value = Number(input.value);
+            if (!Number.isFinite(value) || value < Number(min)) return;
+            item[field] = value;
+            renderPurchaseCart();
+          });
+          cell.appendChild(input);
+        });
+        const amount = row.insertCell();
+        amount.className = 'text-end';
+        amount.textContent = formatRupiah(item.Qty * item.PurchasePrice * (1 - item.Disc / 100));
+        const removeCell = row.insertCell();
+        const remove = document.createElement('button');
+        remove.type = 'button'; remove.className = 'btn btn-sm btn-outline-danger'; remove.title = 'Hapus barang';
+        remove.innerHTML = '<i class="bi bi-x-lg"></i>';
+        remove.addEventListener('click', () => { purchaseCart.delete(item.KdBar); renderPurchaseCart(); });
+        removeCell.appendChild(remove);
+      });
+      updatePurchaseTotal();
+    }
+
+    function calculatePurchaseTotal() {
+      const subtotal = [...purchaseCart.values()].reduce((total, item) => total + item.Qty * item.PurchasePrice * (1 - item.Disc / 100), 0);
+      const taxRate = Math.max(0, Number(document.getElementById('purchaseTax').value) || 0);
+      const extraCost = Math.max(0, Number(document.getElementById('purchaseExtra').value) || 0);
+      const taxAmount = Math.round(subtotal * taxRate) / 100;
+      return { subtotal, taxRate, extraCost, total: Math.round((subtotal + taxAmount + extraCost) * 100) / 100 };
+    }
+
+    function updatePurchaseTotal() {
+      document.getElementById('purchaseTotal').textContent = formatRupiah(calculatePurchaseTotal().total);
+    }
+
+    async function savePurchase() {
+      if (!purchaseCart.size) return alert('Tambahkan barang yang diterima terlebih dahulu.');
+      const totals = calculatePurchaseTotal();
+      const button = document.getElementById('btnSavePurchase');
+      button.disabled = true;
+      try {
+        const response = await fetch('/api/pembelian', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            TglFak: document.getElementById('purchaseDate').value,
+            KDSUPP: document.getElementById('purchaseSupplier').value,
+            Ket: document.getElementById('purchaseDescription').value.trim(),
+            PPNPersen: totals.taxRate, Lain: totals.extraCost,
+            Bayar: Number(document.getElementById('purchasePaid').value) || 0,
+            items: [...purchaseCart.values()].map(item => ({ KdBar: item.KdBar, Qty: item.Qty, Hbeli: item.PurchasePrice, Disc: item.Disc }))
+          })
+        });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message || 'Gagal menyimpan pembelian.');
+        alert(`${result.message}\nTotal: ${formatRupiah(result.grandTotal)}\nSisa: ${formatRupiah(result.remaining)}`);
+        purchaseCart.clear();
+        document.getElementById('purchasePaid').value = '0';
+        renderPurchaseCart();
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        button.disabled = !purchaseCart.size;
+      }
+    }
+
+    async function loadReport() {
+      const from = document.getElementById('reportFrom').value;
+      const to = document.getElementById('reportTo').value;
+      try {
+        const response = await fetch(`/api/laporan?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message || 'Gagal memuat laporan.');
+        document.getElementById('reportSalesTotal').textContent = formatRupiah(result.salesSummary.total);
+        document.getElementById('reportSalesCount').textContent = `${result.salesSummary.transactions} transaksi`;
+        document.getElementById('reportPurchaseTotal').textContent = formatRupiah(result.purchaseSummary.total);
+        document.getElementById('reportPurchaseCount').textContent = `${result.purchaseSummary.transactions} transaksi`;
+        document.getElementById('reportReturnTotal').textContent = formatRupiah(result.purchaseReturnSummary.total);
+        document.getElementById('reportReturnCount').textContent = `${result.purchaseReturnSummary.transactions} retur`;
+        document.getElementById('reportSalesReturnTotal').textContent = formatRupiah(result.salesReturnSummary.total);
+        document.getElementById('reportSalesReturnCount').textContent = `${result.salesReturnSummary.transactions} retur`;
+        const cashIn = result.cashLedger.reduce((total, entry) => total + Number(entry.Masuk || 0), 0);
+        const cashOut = result.cashLedger.reduce((total, entry) => total + Number(entry.Keluar || 0), 0);
+        document.getElementById('reportCashSummary').textContent = `${formatRupiah(cashIn)} / ${formatRupiah(cashOut)}`;
+        renderSalesReportRows(result.sales);
+        renderCashierSalesReport(result.salesByCashier || []);
+        renderReportRows('reportPurchasesBody', result.purchases, ['TglFak', 'NoFak', 'Ket', 'GTotal', 'Bayar'], [3, 4]);
+        renderReportRows('reportCashBody', result.cashLedger, ['Tgl', 'KdUser', 'Awal', 'Masuk', 'Keluar', 'Saldo'], [2, 3, 4, 5]);
+        renderReportRows('reportStockBody', result.stockMovements, ['Tgl', 'KdBar', 'Nmbar', 'NoBukti', 'Qty', 'Status', 'Ket'], [], [4]);
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    function renderReportRows(elementId, rows, fields, moneyIndexes = [fields.length - 1], numberIndexes = []) {
+      const body = document.getElementById(elementId);
+      body.replaceChildren();
+      rows.forEach(item => {
+        const row = body.insertRow();
+        fields.forEach((field, index) => {
+          const cell = row.insertCell();
+          if (moneyIndexes.includes(index)) cell.className = 'text-end';
+          cell.textContent = moneyIndexes.includes(index) ? formatRupiah(item[field]) :
+            numberIndexes.includes(index) ? formatNumber(item[field]) : (item[field] ?? '-');
+        });
+      });
+      if (!rows.length) {
+        const row = body.insertRow();
+        const cell = row.insertCell(); cell.colSpan = fields.length;
+        cell.className = 'text-center text-muted py-3'; cell.textContent = 'Tidak ada transaksi pada rentang ini.';
+      }
+    }
+
+    function renderSalesReportRows(rows) {
+      const body = document.getElementById('reportSalesBody');
+      body.replaceChildren();
+      rows.forEach(sale => {
+        const row = body.insertRow();
+        [sale.tglfak, sale.nofak, sale.kdkasir, sale.KOND === '1' ? 'Aktif' : 'Batal'].forEach(value => {
+          row.insertCell().textContent = value ?? '-';
+        });
+        const total = row.insertCell(); total.className = 'text-end'; total.textContent = formatRupiah(sale.GTotal);
+        const action = row.insertCell(); action.className = 'text-end';
+        if (sale.KOND === '1') {
+          const button = document.createElement('button');
+          button.type = 'button'; button.className = 'btn btn-sm btn-outline-danger'; button.textContent = 'Batal';
+          button.addEventListener('click', () => cancelSale(sale)); action.appendChild(button);
+        }
+      });
+      if (!rows.length) {
+        const row = body.insertRow(); const cell = row.insertCell();
+        cell.colSpan = 6; cell.className = 'text-center text-muted py-3'; cell.textContent = 'Tidak ada transaksi pada rentang ini.';
+      }
+    }
+
+    function renderCashierSalesReport(rows) {
+      const body = document.getElementById('reportCashierBody');
+      body.replaceChildren();
+      rows.forEach(row => {
+        const tr = body.insertRow();
+        tr.insertCell().textContent = row.Tgl;
+        tr.insertCell().textContent = row.Nmuser;
+        const txCell = tr.insertCell(); txCell.className = 'text-end'; txCell.textContent = formatNumber(row.Transactions);
+        const totalCell = tr.insertCell(); totalCell.className = 'text-end fw-semibold'; totalCell.textContent = formatRupiah(row.Total);
+      });
+      if (!rows.length) {
+        const row = body.insertRow(); const cell = row.insertCell();
+        cell.colSpan = 4; cell.className = 'text-center text-muted py-3'; cell.textContent = 'Tidak ada penjualan pada rentang ini.';
+      }
+
+      const dates = [...new Set(rows.map(row => row.Tgl))].sort();
+      const cashiers = [...new Set(rows.map(row => row.Nmuser))];
+      const palette = ['#4dc9a8', '#f2b134', '#e6553a', '#5b8def', '#b660cd', '#5ad1e6', '#f2814f'];
+      const datasets = cashiers.map((name, index) => ({
+        label: name,
+        backgroundColor: palette[index % palette.length],
+        data: dates.map(date => {
+          const match = rows.find(row => row.Tgl === date && row.Nmuser === name);
+          return match ? Number(match.Total) : 0;
+        })
+      }));
+
+      if (cashierSalesChart) cashierSalesChart.destroy();
+      if (typeof Chart === 'undefined' || !dates.length) return;
+      cashierSalesChart = new Chart(document.getElementById('cashierSalesChart').getContext('2d'), {
+        type: 'bar',
+        data: { labels: dates, datasets },
+        options: {
+          responsive: true,
+          scales: {
+            x: { ticks: { color: '#c9d6d1' }, grid: { color: '#2a3835' } },
+            y: { beginAtZero: true, ticks: { color: '#c9d6d1', callback: value => formatRupiah(value) }, grid: { color: '#2a3835' } }
+          },
+          plugins: {
+            legend: { position: 'bottom', labels: { color: '#e7efec' } },
+            tooltip: { callbacks: { label: context => `${context.dataset.label}: ${formatRupiah(context.raw)}` } }
+          }
+        }
+      });
+    }
+
+    async function loadCashierReport() {
+      const from = document.getElementById('cashierReportFrom').value;
+      const to = document.getElementById('cashierReportTo').value;
+      try {
+        const response = await fetch(`/api/laporan-kasir?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message || 'Gagal memuat laporan.');
+        lastCashierReport = result;
+        const total = Number(result.summary.total) || 0;
+        const transactions = Number(result.summary.transactions) || 0;
+        document.getElementById('cashierReportTotal').textContent = formatRupiah(total);
+        document.getElementById('cashierReportCount').textContent = `${transactions} transaksi`;
+        document.getElementById('cashierReportAverage').textContent = formatRupiah(transactions ? total / transactions : 0);
+        renderCashierHourlyChart(result.hourly);
+        const body = document.getElementById('cashierReportBody');
+        body.replaceChildren();
+        result.sales.forEach(sale => {
+          const row = body.insertRow();
+          row.insertCell().textContent = sale.tglfak;
+          row.insertCell().textContent = String(sale.jam).slice(0, 5);
+          row.insertCell().textContent = sale.nofak;
+          row.insertCell().textContent = sale.kdkasir;
+          const totalCell = row.insertCell(); totalCell.className = 'text-end fw-semibold'; totalCell.textContent = formatRupiah(sale.GTotal);
+        });
+        if (!result.sales.length) {
+          const row = body.insertRow(); const cell = row.insertCell();
+          cell.colSpan = 5; cell.className = 'text-center text-muted py-3'; cell.textContent = 'Tidak ada transaksi pada rentang ini.';
+        }
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    function renderCashierHourlyChart(hourly) {
+      if (cashierHourlyChart) cashierHourlyChart.destroy();
+      if (typeof Chart === 'undefined') return;
+      const hours = Array.from({ length: 24 }, (_, hour) => hour);
+      const totalByHour = new Map(hourly.map(row => [Number(row.Jam), Number(row.Total)]));
+      const countByHour = new Map(hourly.map(row => [Number(row.Jam), Number(row.Transactions)]));
+      cashierHourlyChart = new Chart(document.getElementById('cashierHourlyChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: hours.map(hour => `${String(hour).padStart(2, '0')}:00`),
+          datasets: [
+            { label: 'Total Penjualan', backgroundColor: '#4dc9a8', data: hours.map(hour => totalByHour.get(hour) || 0), yAxisID: 'y' },
+            { label: 'Jumlah Transaksi', type: 'line', borderColor: '#f2b134', backgroundColor: '#f2b134', data: hours.map(hour => countByHour.get(hour) || 0), yAxisID: 'y1', tension: 0.3 }
+          ]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            x: { ticks: { color: '#c9d6d1' }, grid: { color: '#2a3835' } },
+            y: { beginAtZero: true, position: 'left', ticks: { color: '#c9d6d1', callback: value => formatRupiah(value) }, grid: { color: '#2a3835' } },
+            y1: { beginAtZero: true, position: 'right', ticks: { color: '#c9d6d1', stepSize: 1 }, grid: { drawOnChartArea: false } }
+          },
+          plugins: {
+            legend: { position: 'bottom', labels: { color: '#e7efec' } },
+            tooltip: { callbacks: { label: context => context.dataset.yAxisID === 'y' ? `${context.dataset.label}: ${formatRupiah(context.raw)}` : `${context.dataset.label}: ${context.raw}` } }
+          }
+        }
+      });
+    }
+
+    function downloadCashierReportPdf() {
+      if (!lastCashierReport) return alert('Tampilkan laporan terlebih dahulu.');
+      if (typeof window.jspdf === 'undefined') return alert('Modul PDF belum siap, coba lagi sebentar.');
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const total = Number(lastCashierReport.summary.total) || 0;
+      const transactions = Number(lastCashierReport.summary.transactions) || 0;
+
+      doc.setFontSize(14);
+      doc.text(businessSettings.NmUsaha || 'ABID KARYA SAYUR', 14, 16);
+      doc.setFontSize(11);
+      doc.text('Laporan Penjualan Kasir', 14, 23);
+      doc.setFontSize(9);
+      doc.text(`Periode: ${lastCashierReport.from} s/d ${lastCashierReport.to}`, 14, 29);
+      doc.text(`Kasir: ${currentUser?.Nmuser || currentUser?.KdUser || '-'}`, 14, 34);
+      doc.text(`Total penjualan: ${formatRupiah(total)}  ·  Transaksi: ${transactions}  ·  Rata-rata: ${formatRupiah(transactions ? total / transactions : 0)}`, 14, 39);
+
+      doc.autoTable({
+        startY: 45,
+        head: [['Tanggal', 'Jam', 'No. Faktur', 'Kasir', 'Total']],
+        body: lastCashierReport.sales.map(sale => [sale.tglfak, String(sale.jam).slice(0, 5), sale.nofak, sale.kdkasir, formatRupiah(sale.GTotal)]),
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [38, 113, 95] }
+      });
+
+      doc.save(`laporan-penjualan-${lastCashierReport.from}-${lastCashierReport.to}.pdf`);
+    }
+
+    async function loadTopSellingReport() {
+      const from = document.getElementById('topSellingFrom').value;
+      const to = document.getElementById('topSellingTo').value;
+      const kdKel = document.getElementById('topSellingGroup').value;
+      try {
+        const response = await fetch(`/api/laporan-barang-terlaris?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&kdKel=${encodeURIComponent(kdKel)}`);
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message || 'Gagal memuat laporan barang terlaris.');
+        result.groupLabel = document.getElementById('topSellingGroup').selectedOptions[0]?.textContent || 'Semua kelompok';
+        lastTopSellingReport = result;
+        const body = document.getElementById('topSellingBody');
+        body.replaceChildren();
+        result.items.forEach(item => {
+          const row = body.insertRow();
+          row.insertCell().textContent = `${item.NmKel} (${item.KdKel})`;
+          row.insertCell().textContent = item.KdBar;
+          row.insertCell().textContent = item.Nmbar;
+          const quantityCell = row.insertCell();
+          quantityCell.className = 'text-end fw-semibold';
+          quantityCell.textContent = formatNumber(item.Qty);
+          row.insertCell().textContent = item.SatKecil || '-';
+          const totalCell = row.insertCell();
+          totalCell.className = 'text-end';
+          totalCell.textContent = formatRupiah(item.Total);
+        });
+        if (!result.items.length) {
+          const row = body.insertRow();
+          const cell = row.insertCell();
+          cell.colSpan = 6;
+          cell.className = 'text-center text-muted py-3';
+          cell.textContent = 'Tidak ada penjualan pada rentang ini.';
+        }
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    function downloadTopSellingReportPdf() {
+      if (!lastTopSellingReport) return alert('Tampilkan laporan terlebih dahulu.');
+      if (typeof window.jspdf === 'undefined') return alert('Modul PDF belum siap, coba lagi sebentar.');
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'landscape' });
+
+      doc.setFontSize(14);
+      doc.text(businessSettings.NmUsaha || 'ABID KARYA SAYUR', 14, 16);
+      doc.setFontSize(11);
+      doc.text('Laporan Barang Terlaris per Kelompok', 14, 23);
+      doc.setFontSize(9);
+      doc.text(`Periode: ${lastTopSellingReport.from} s/d ${lastTopSellingReport.to}`, 14, 29);
+      doc.text(`Kelompok: ${lastTopSellingReport.groupLabel}`, 14, 34);
+      doc.autoTable({
+        startY: 39,
+        head: [['Kelompok', 'Kode Barang', 'Nama Barang', 'Terjual', 'Satuan', 'Nilai Penjualan']],
+        body: lastTopSellingReport.items.map(item => [
+          `${item.NmKel} (${item.KdKel})`,
+          item.KdBar,
+          item.Nmbar,
+          formatNumber(item.Qty),
+          item.SatKecil || '-',
+          formatRupiah(item.Total)
+        ]),
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [38, 113, 95] }
+      });
+      doc.save(`laporan-barang-terlaris-${lastTopSellingReport.from}-${lastTopSellingReport.to}.pdf`);
+    }
+
+    async function cancelSale(sale) {
+      if (!confirm(`Batalkan transaksi ${sale.nofak} tanggal ${sale.tglfak}? Stok akan dipulihkan.`)) return;
+      try {
+        const response = await fetch('/api/penjualan/batal', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nofak: sale.nofak, tglfak: String(sale.tglfak).slice(0, 10), kdkasir: sale.kdkasir })
+        });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message);
+        alert(result.message);
+        await loadReport();
+        loadDataBarang();
+      } catch (err) { alert(err.message); }
+    }
+
+    async function searchProducts(search) {
+      const resultList = document.getElementById('productResults');
+      latestProductResults = [];
+      resultList.replaceChildren();
+      if (!search) return;
+
+      try {
+        const response = await fetch(`/api/cari-barang?q=${encodeURIComponent(search)}`);
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message);
+        latestProductResults = result.data;
+        result.data.forEach(item => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+          const description = document.createElement('span');
+          description.textContent = `${item.Nmbar} · ${item.KdBar} · stok ${formatNumber(item.Stok)} ${item.SatKecil || ''}`;
+          const price = document.createElement('strong');
+          price.textContent = formatRupiah(item.HJual);
+          button.append(description, price);
+          button.addEventListener('click', () => addToSalesCart(item));
+          resultList.appendChild(button);
+        });
+        if (!result.data.length) {
+          const empty = document.createElement('div');
+          empty.className = 'list-group-item text-muted';
+          empty.textContent = 'Barang tidak ditemukan.';
+          resultList.appendChild(empty);
+        }
+      } catch (err) {
+        console.error('Gagal mencari barang:', err);
+      }
+    }
+
+    function addToSalesCart(item) {
+      const current = salesCart.get(item.KdBar);
+      const nextQuantity = (current?.Qty || 0) + 1;
+      if (nextQuantity > Number(item.Stok || 0)) {
+        alert(`Stok ${item.Nmbar} tidak cukup.`);
+        return;
+      }
+      salesCart.set(item.KdBar, { ...item, Qty: nextQuantity });
+      document.getElementById('searchProduct').value = '';
+      document.getElementById('productResults').replaceChildren();
+      latestProductResults = [];
+      renderSalesCart();
+      document.getElementById('searchProduct').focus();
+    }
+
+    // Barcode scanner mengirim Enter setelah kode; cari kecocokan persis lalu langsung tambah ke keranjang.
+    async function handleProductScan(code) {
+      if (!code) return;
+      clearTimeout(productSearchTimer);
+      let exact = latestProductResults.find(item => item.Barcode === code || item.KdBar === code);
+      if (!exact && latestProductResults.length === 1) exact = latestProductResults[0];
+      if (!exact) {
+        try {
+          const response = await fetch(`/api/cari-barang?q=${encodeURIComponent(code)}`);
+          const result = await response.json();
+          if (result.success) {
+            exact = result.data.find(item => item.Barcode === code || item.KdBar === code) || (result.data.length === 1 ? result.data[0] : null);
+          }
+        } catch (err) {
+          console.error('Gagal memindai barang:', err);
+        }
+      }
+      if (exact) addToSalesCart(exact);
+      else alert(`Barang dengan kode "${code}" tidak ditemukan.`);
+    }
+
+    function setCartQuantity(kdBar, value) {
+      const item = salesCart.get(kdBar);
+      const quantity = Number(value);
+      if (!item) return;
+      if (!Number.isFinite(quantity) || quantity <= 0) {
+        salesCart.delete(kdBar);
+      } else if (quantity > Number(item.Stok || 0)) {
+        alert(`Stok ${item.Nmbar} tidak cukup.`);
+      } else {
+        item.Qty = quantity;
+      }
+      renderSalesCart();
+    }
+
+    function renderSalesCart() {
+      const body = document.getElementById('cartBody');
+      body.replaceChildren();
+      if (!salesCart.size) {
+        const row = body.insertRow();
+        const cell = row.insertCell();
+        cell.colSpan = 5;
+        cell.className = 'text-center text-muted py-4';
+        cell.textContent = 'Keranjang masih kosong.';
+      }
+
+      salesCart.forEach(item => {
+        const row = body.insertRow();
+        const productCell = row.insertCell();
+        productCell.textContent = `${item.Nmbar} (${item.SatKecil || 'PCS'})`;
+        const priceCell = row.insertCell();
+        priceCell.className = 'text-center';
+        const price = document.createElement('input');
+        price.type = 'number';
+        price.min = '0';
+        price.step = '1';
+        price.inputMode = 'decimal';
+        price.value = item.HJual;
+        price.className = 'form-control form-control-sm text-end d-block mx-auto';
+        price.style.width = '100px';
+        price.title = 'Harga bisa diubah manual';
+        priceCell.appendChild(price);
+        const quantityCell = row.insertCell();
+        quantityCell.className = 'text-center';
+        const quantity = document.createElement('input');
+        quantity.type = 'number';
+        quantity.min = '0.001';
+        quantity.step = '0.001';
+        quantity.inputMode = 'decimal';
+        quantity.value = item.Qty;
+        quantity.className = 'form-control form-control-sm text-end d-block mx-auto';
+        quantity.style.width = '90px';
+        const totalCell = row.insertCell();
+        totalCell.className = 'text-end fw-semibold';
+        totalCell.textContent = formatRupiah(Number(item.HJual) * item.Qty);
+        price.addEventListener('input', () => {
+          const value = Number(price.value);
+          if (!Number.isFinite(value) || value < 0) return;
+          item.HJual = value;
+          totalCell.textContent = formatRupiah(Number(item.HJual) * item.Qty);
+          updateSaleTotals();
+        });
+        quantity.addEventListener('input', () => {
+          const value = Number(quantity.value);
+          if (!Number.isFinite(value) || value <= 0 || value > Number(item.Stok || 0)) return;
+          item.Qty = value;
+          totalCell.textContent = formatRupiah(Number(item.HJual) * item.Qty);
+          updateSaleTotals();
+        });
+        quantity.addEventListener('change', () => setCartQuantity(item.KdBar, quantity.value));
+        quantityCell.appendChild(quantity);
+        const actionCell = row.insertCell();
+        actionCell.className = 'text-center';
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'btn btn-sm btn-outline-danger';
+        remove.title = 'Hapus barang dari keranjang';
+        remove.innerHTML = '<i class="bi bi-x-lg"></i>';
+        remove.addEventListener('click', () => { salesCart.delete(item.KdBar); renderSalesCart(); });
+        actionCell.appendChild(remove);
+      });
+      updateSaleTotals();
+    }
+
+    function calculateSaleTotals() {
+      const subtotal = [...salesCart.values()].reduce((total, item) => total + Number(item.HJual) * item.Qty, 0);
+      const discountRate = Math.min(100, Math.max(0, Number(document.getElementById('saleDiscount').value) || 0));
+      const taxRate = 0;
+      const discountAmount = Math.round(subtotal * discountRate) / 100;
+      const taxAmount = Math.round((subtotal - discountAmount) * taxRate) / 100;
+      return { subtotal, discountRate, discountAmount, taxRate, taxAmount, grandTotal: Math.round((subtotal - discountAmount + taxAmount) * 100) / 100 };
+    }
+
+    function formatRupiah(value) {
+      return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Number(value) || 0);
+    }
+
+    function updateSaleTotals() {
+      const totals = calculateSaleTotals();
+      const paymentMethod = document.getElementById('paymentMethod').value;
+      const receivedField = document.getElementById('cashReceived');
+      const receivedLabel = document.getElementById('cashReceivedLabel');
+      const changeLabel = document.getElementById('saleChangeLabel');
+      const isCredit = paymentMethod === 'credit';
+      const isCashless = paymentMethod === 'edc' || paymentMethod === 'qris';
+      receivedField.disabled = isCashless;
+      receivedLabel.textContent = isCredit ? 'Uang muka tunai' : 'Uang diterima';
+      changeLabel.textContent = isCredit ? 'Sisa piutang' : 'Kembalian';
+      const received = isCashless ? totals.grandTotal : Number(receivedField.value) || 0;
+      const difference = isCredit ? Math.max(0, totals.grandTotal - received) : Math.max(0, received - totals.grandTotal);
+      const member = document.getElementById('saleCustomer').selectedOptions[0];
+      const creditLimit = Number(member?.dataset.creditLimit) || 0;
+      const currentOutstanding = Number(member?.dataset.outstanding) || 0;
+      const exceedsLimit = isCredit && currentOutstanding + difference > creditLimit + 0.000001;
+      if (exceedsLimit) changeLabel.textContent = 'Melebihi plafon';
+      document.getElementById('saleSubtotal').textContent = formatRupiah(totals.subtotal);
+      document.getElementById('saleGrandTotal').textContent = formatRupiah(totals.grandTotal);
+      document.getElementById('saleChange').textContent = formatRupiah(difference);
+      document.getElementById('btnCompleteSale').disabled = !salesCart.size || (isCredit && !document.getElementById('saleCustomer').value) || exceedsLimit;
+    }
+
+    function clearCart() {
+      if (salesCart.size && !confirm('Kosongkan semua barang di keranjang?')) return;
+      salesCart.clear();
+      currentPendingNo = null;
+      document.getElementById('cashReceived').value = '0';
+      renderSalesCart();
+    }
+
+    async function savePendingSale() {
+      if (!salesCart.size) return alert('Keranjang masih kosong.');
+      const button = document.querySelector('[onclick="savePendingSale()"]');
+      button.disabled = true;
+      try {
+        const totals = calculateSaleTotals();
+        const response = await fetch('/api/penjualan/pending', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            KdKasir: currentUser?.KdUser,
+            Disc: totals.discountRate, Ppn: 0,
+            items: [...salesCart.values()].map(item => ({ KdBar: item.KdBar, Qty: item.Qty, HJual: item.HJual }))
+          })
+        });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message || 'Gagal menunda transaksi.');
+        if (currentPendingNo) await fetch(`/api/penjualan/pending/${encodeURIComponent(currentPendingNo)}`, { method: 'DELETE' });
+        currentPendingNo = null;
+        salesCart.clear();
+        document.getElementById('cashReceived').value = '0';
+        renderSalesCart();
+        await loadPendingSales();
+        alert(result.message);
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    async function loadPendingSales() {
+      const list = document.getElementById('pendingSalesList');
+      list.replaceChildren();
+      const cashier = currentUser?.KdUser;
+      if (!cashier) return;
+      try {
+        const response = await fetch(`/api/penjualan/pending?KdKasir=${encodeURIComponent(cashier)}`);
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message);
+        result.data.forEach(pending => {
+          const row = document.createElement('div');
+          row.className = 'list-group-item d-flex justify-content-between align-items-center gap-2';
+          const resume = document.createElement('button');
+          resume.type = 'button'; resume.className = 'btn btn-link text-start p-0 text-decoration-none flex-grow-1';
+          resume.textContent = `${pending.nofak} · ${pending.tglfak} · ${formatRupiah(pending.GTotal)}`;
+          resume.addEventListener('click', () => resumePendingSale(pending.nofak));
+          const remove = document.createElement('button');
+          remove.type = 'button'; remove.className = 'btn btn-sm btn-outline-danger'; remove.title = 'Hapus transaksi tertunda';
+          remove.innerHTML = '<i class="bi bi-trash"></i>';
+          remove.addEventListener('click', () => deletePendingSale(pending.nofak));
+          row.append(resume, remove);
+          list.appendChild(row);
+        });
+        if (!result.data.length) {
+          const empty = document.createElement('div');
+          empty.className = 'small text-muted'; empty.textContent = 'Tidak ada transaksi tertunda.';
+          list.appendChild(empty);
+        }
+      } catch (err) {
+        console.error('Gagal memuat transaksi tertunda:', err);
+      }
+    }
+
+    async function resumePendingSale(invoice) {
+      if (salesCart.size && !confirm('Ganti keranjang saat ini dengan transaksi tertunda?')) return;
+      try {
+        const response = await fetch(`/api/penjualan/pending/${encodeURIComponent(invoice)}`);
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message || 'Gagal memuat transaksi.');
+        salesCart.clear();
+        result.data.items.forEach(item => {
+          if (item.Nmbar) salesCart.set(item.KdBar, { ...item, Qty: Number(item.Qty) });
+        });
+        document.getElementById('saleDiscount').value = result.data.Disc || 0;
+        currentPendingNo = invoice;
+        renderSalesCart();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function deletePendingSale(invoice) {
+      if (!confirm(`Hapus transaksi tertunda ${invoice}?`)) return;
+      try {
+        const response = await fetch(`/api/penjualan/pending/${encodeURIComponent(invoice)}`, { method: 'DELETE' });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message);
+        if (currentPendingNo === invoice) currentPendingNo = null;
+        await loadPendingSales();
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function completeSale() {
+      if (!salesCart.size) return;
+      const totals = calculateSaleTotals();
+      const paymentMethod = document.getElementById('paymentMethod').value;
+      const payload = {
+        KdKasir: currentUser?.KdUser,
+        KdCust: document.getElementById('saleCustomer').value || null,
+        items: [...salesCart.values()].map(item => ({ KdBar: item.KdBar, Qty: item.Qty, HJual: item.HJual })),
+        pendingNo: currentPendingNo,
+        Disc: totals.discountRate,
+        Ppn: 0,
+        paymentMethod,
+        cashReceived: Number(document.getElementById('cashReceived').value) || 0
+      };
+
+      const button = document.getElementById('btnCompleteSale');
+      button.disabled = true;
+      try {
+        const response = await fetch('/api/penjualan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message || 'Gagal menyimpan penjualan.');
+        if (businessSettings.CetJual === '1') printSaleReceipt(result, [...salesCart.values()], paymentMethod, payload.cashReceived);
+        const completedPendingNo = currentPendingNo;
+        const wasCreditSale = paymentMethod === 'credit';
+        salesCart.clear();
+        currentPendingNo = null;
+        document.getElementById('cashReceived').value = '0';
+        renderSalesCart();
+        if (completedPendingNo) {
+          try {
+            const pendingResponse = await fetch(`/api/penjualan/pending/${encodeURIComponent(completedPendingNo)}`, { method: 'DELETE' });
+            if (!pendingResponse.ok) throw new Error('Transaksi tertunda gagal dihapus.');
+            await loadPendingSales();
+          } catch (err) {
+            alert('Penjualan berhasil, tetapi transaksi tertunda gagal dihapus. Hapus dari daftar tertunda agar tidak diproses ulang.');
+          }
+        }
+        const settlement = paymentMethod === 'credit'
+          ? `Sisa piutang: ${formatRupiah(result.creditBalance)}`
+          : `Kembalian: ${formatRupiah(result.change)}`;
+        alert(`${result.message}\nTotal: ${formatRupiah(result.grandTotal)}\n${settlement}`);
+        if (wasCreditSale) await loadMembers();
+      } catch (err) {
+        alert(err.message);
+      } finally {
+        button.disabled = !salesCart.size;
+      }
+    }
+
+    function printSaleReceipt(result, items, paymentMethod, cashReceived) {
+      const receipt = document.getElementById('receiptPrint');
+      receipt.replaceChildren();
+      const addLine = (text, className = '') => {
+        const line = document.createElement('p');
+        line.textContent = text || '';
+        if (className) line.className = className;
+        receipt.appendChild(line);
+      };
+
+      addLine(businessSettings.NmUsaha || 'ABID KARYA SAYUR', 'fw-bold');
+      addLine(businessSettings.ALUsaha || '');
+      addLine([businessSettings.Kota, businessSettings.NoTelp].filter(Boolean).join(' · '));
+      if (businessSettings.Headjual) addLine(businessSettings.Headjual);
+      addLine(`Faktur: ${result.invoice}`);
+      addLine(`Tanggal: ${new Date().toLocaleString('id-ID')}`);
+      addLine(`Kasir: ${currentUser?.Nmuser || currentUser?.KdUser || ''}`);
+
+      const table = document.createElement('table');
+      const body = table.createTBody();
+      items.forEach(item => {
+        const row = body.insertRow();
+        const product = row.insertCell(); product.colSpan = 2; product.textContent = item.Nmbar;
+        const detail = body.insertRow();
+        detail.insertCell().textContent = `${formatNumber(item.Qty)} x ${formatRupiah(item.HJual)}`;
+        const amount = detail.insertCell(); amount.className = 'text-end';
+        amount.textContent = formatRupiah(Number(item.HJual) * item.Qty);
+      });
+      receipt.appendChild(table);
+      addLine(`Subtotal: ${formatRupiah(result.subtotal)}`);
+      addLine(`Diskon: ${formatRupiah(result.discountAmount)}`);
+      addLine(`TOTAL: ${formatRupiah(result.grandTotal)}`, 'receipt-total fw-bold');
+      if (paymentMethod === 'cash') {
+        addLine(`Tunai: ${formatRupiah(cashReceived)}`);
+        addLine(`Kembali: ${formatRupiah(result.change)}`);
+      } else if (paymentMethod === 'credit') {
+        addLine(`Uang muka: ${formatRupiah(cashReceived)}`);
+        addLine(`Sisa piutang: ${formatRupiah(result.creditBalance)}`);
+      } else addLine('Pembayaran: Kartu');
+      [businessSettings.FootJual, businessSettings.FootJual2, businessSettings.FootJual3].filter(Boolean).forEach(line => addLine(line));
+      window.print();
+    }
+
+    function downloadExcelTemplate() {
+      const workbook = XLSX.utils.book_new();
+      const worksheet = XLSX.utils.aoa_to_sheet([excelFields]);
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Barang');
+      XLSX.writeFile(workbook, 'template_barang.xlsx');
+    }
+
+    async function fetchAllBarang() {
+      const firstResponse = await fetch('/api/barang?page=1&limit=500');
+      const firstResult = await firstResponse.json();
+      if (!firstResult.success) throw new Error(firstResult.message || 'Gagal mengambil data barang.');
+
+      const allItems = [...firstResult.data];
+      for (let page = 2; page <= firstResult.pagination.totalPages; page++) {
+        const response = await fetch(`/api/barang?page=${page}&limit=500`);
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message || `Gagal mengambil halaman ${page}.`);
+        allItems.push(...result.data);
+      }
+      return allItems;
+    }
+
+    async function downloadExcel() {
+      try {
+        const allItems = await fetchAllBarang();
+        const workbook = XLSX.utils.book_new();
+        const rows = allItems.map(item => excelFields.map(field => item[field] ?? ''));
+        const worksheet = XLSX.utils.aoa_to_sheet([excelFields, ...rows]);
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Barang');
+        XLSX.writeFile(workbook, 'data_barang.xlsx');
+      } catch (err) {
+        alert('Gagal mengunduh Excel: ' + err.message);
+      }
+    }
+
+    function parseExcelNumber(value) {
+      if (value === '' || value === null || value === undefined) return 0;
+      const number = typeof value === 'number' ? value : Number(String(value).trim().replace(',', '.'));
+      return Number.isFinite(number) ? number : null;
+    }
+
+    async function importExcel(event) {
+      const file = event.target.files[0];
+      event.target.value = '';
+      if (!file) return;
+
+      try {
+        const workbook = XLSX.read(await file.arrayBuffer(), { type: 'array' });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        if (!worksheet) throw new Error('File Excel tidak memiliki lembar kerja.');
+
+        const rows = XLSX.utils.sheet_to_json(worksheet, { defval: '', raw: true });
+        if (!rows.length) throw new Error('Tidak ada baris data pada file Excel.');
+        if (!confirm(`Pulihkan ${rows.length} baris? KdBar yang sudah ada akan diperbarui, sedangkan KdBar baru akan ditambahkan.`)) return;
+
+        const existingItems = await fetchAllBarang();
+        const existingByKdBar = new Map(existingItems.map(item => [String(item.KdBar), item]));
+
+        let added = 0;
+        let updated = 0;
+        const errors = [];
+        const fileCodes = new Set();
+        for (let index = 0; index < rows.length; index++) {
+          const row = rows[index];
+          const rowNumber = index + 2;
+          const payload = Object.fromEntries(excelFields.map(field => [field, row[field] ?? '']));
+          payload.KdBar = payload.KdBar === '' ? '' : String(payload.KdBar).trim();
+          ['Barcode', 'KdKel', 'Nmbar', 'SatKecil', 'RAK', 'KDSUPP', 'WARNA', 'UKURAN'].forEach(field => {
+            payload[field] = String(payload[field]).trim();
+          });
+
+          if (!payload.Nmbar) {
+            errors.push(`Baris ${rowNumber}: Nama Barang (Nmbar) wajib diisi.`);
+            continue;
+          }
+
+          if (payload.KdBar && fileCodes.has(payload.KdBar)) {
+            errors.push(`Baris ${rowNumber}: KdBar ${payload.KdBar} muncul lebih dari sekali di file.`);
+            continue;
+          }
+          if (payload.KdBar) fileCodes.add(payload.KdBar);
+
+          let invalidNumber = false;
+          ['HBeli', 'HJual', 'StAwal'].forEach(field => {
+            payload[field] = parseExcelNumber(payload[field]);
+            if (payload[field] === null) invalidNumber = true;
+          });
+          if (invalidNumber) {
+            errors.push(`Baris ${rowNumber}: HBeli, HJual, dan StAwal harus berupa angka.`);
+            continue;
+          }
+
+          try {
+            const existingItem = payload.KdBar ? existingByKdBar.get(payload.KdBar) : null;
+            const response = await fetch(existingItem ? `/api/barang/${encodeURIComponent(payload.KdBar)}` : '/api/barang', {
+              method: existingItem ? 'PUT' : 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+            if (result.success) {
+              if (existingItem) updated++;
+              else {
+                added++;
+                if (result.KdBar) existingByKdBar.set(String(result.KdBar), payload);
+              }
+            } else errors.push(`Baris ${rowNumber}: ${result.message || 'Gagal menyimpan barang.'}`);
+          } catch (err) {
+            errors.push(`Baris ${rowNumber}: gagal terhubung ke server.`);
+          }
+        }
+
+        const imported = added + updated;
+        const summary = [`Pemulihan selesai. Ditambahkan: ${added}; diperbarui: ${updated}; gagal: ${errors.length}.`];
+        if (errors.length) summary.push('', ...errors.slice(0, 10), ...(errors.length > 10 ? [`...dan ${errors.length - 10} kegagalan lainnya.`] : []));
+        alert(summary.join('\n'));
+        if (imported > 0) location.reload();
+      } catch (err) {
+        alert('Gagal membaca Excel: ' + err.message);
+      }
+    }
+
+    function formatNumber(num) {
+      return new Intl.NumberFormat('id-ID', { minimumFractionDigits: 0 }).format(num || 0);
+    }
+
+    function updateModalMarkup() {
+      const hBeli = parseFloat(document.getElementById('inputHBeli').value) || 0;
+      const hJual = parseFloat(document.getElementById('inputHJual').value) || 0;
+      if (hBeli > 0) {
+        const markup = (((hJual - hBeli) / hBeli) * 100).toFixed(2);
+        document.getElementById('inputMarkup').textContent = markup + '%';
+      } else {
+        document.getElementById('inputMarkup').textContent = '0%';
+      }
+    }
+
+    async function loadOptions() {
+      try {
+        const res = await fetch('/api/options');
+        const result = await res.json();
+        if (result.success) {
+          const kelSelect = document.getElementById('filterKdKel');
+          const rakSelect = document.getElementById('filterRak');
+          const inputKelSelect = document.getElementById('inputKdKel');
+          const topSellingKelSelect = document.getElementById('topSellingGroup');
+          kelompokOptions = result.kelompok;
+          kelSelect.replaceChildren(kelSelect.options[0]);
+          inputKelSelect.replaceChildren(inputKelSelect.options[0]);
+          topSellingKelSelect.replaceChildren(topSellingKelSelect.options[0]);
+          rakSelect.replaceChildren(rakSelect.options[0]);
+
+          result.kelompok.forEach(k => {
+            const label = result.kelompokNama?.[k] ? `${k} · ${result.kelompokNama[k]}` : k;
+            kelSelect.add(new Option(label, k));
+            inputKelSelect.add(new Option(label, k));
+            topSellingKelSelect.add(new Option(label, k));
+          });
+          result.rak.forEach(r => {
+            rakSelect.add(new Option(r, r));
+          });
+
+          inputKelSelect.value = kelompokOptions.includes('UM') ? 'UM' : (kelompokOptions[0] || '');
+          if (!editingKdBar) updateNextKdBar();
+        }
+      } catch (err) {
+        console.error('Error options:', err);
+      }
+    }
+
+    async function updateNextKdBar() {
+      const kdKel = document.getElementById('inputKdKel').value;
+      const codeInput = document.getElementById('inputKdBar');
+      const requestId = ++kdBarPreviewRequest;
+
+      if (!kdKel) {
+        codeInput.textContent = 'Pilih kelompok';
+        return;
+      }
+
+      codeInput.textContent = 'Menghitung...';
+      try {
+        const res = await fetch(`/api/kode-barang-berikutnya?kdKel=${encodeURIComponent(kdKel)}`);
+        const result = await res.json();
+        if (requestId !== kdBarPreviewRequest) return;
+        codeInput.textContent = result.success ? result.KdBar : 'Kode tidak tersedia';
+      } catch (err) {
+        if (requestId === kdBarPreviewRequest) codeInput.textContent = 'Kode tidak tersedia';
+        console.error('Error kode barang:', err);
+      }
+    }
+
+    async function loadDataBarang(page = currentPage) {
+      currentPage = page;
+      const name = document.getElementById('searchName').value.trim();
+      const barcode = document.getElementById('searchBarcode').value.trim();
+      const kdBar = document.getElementById('searchKdBar').value.trim();
+      const kdKel = document.getElementById('filterKdKel').value;
+      const rak = document.getElementById('filterRak').value;
+
+      const params = new URLSearchParams({
+        page: currentPage,
+        limit: 20,
+        searchName: name,
+        searchBarcode: barcode,
+        searchKdBar: kdBar,
+        filterKdKel: kdKel,
+        filterRak: rak
+      });
+
+      try {
+        const res = await fetch(`/api/barang?${params.toString()}`);
+        const result = await res.json();
+
+        if (result.success) {
+          renderTable(result.data);
+          renderPagination(result.pagination);
+        }
+      } catch (err) {
+        console.error('Error load barang:', err);
+        document.getElementById('tableBody').innerHTML = `
+          <tr><td colspan="12" class="text-center py-4 text-danger fw-bold">Gagal terhubung ke database server.</td></tr>
+        `;
+      }
+    }
+
+    function renderTable(data) {
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = '';
+      itemsCache = {};
+
+      if (!data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="12" class="text-center py-4 text-muted">Tidak ada data barang ditemukan.</td></tr>`;
+        return;
+      }
+
+      data.forEach(item => {
+        itemsCache[item.KdBar] = item;
+        const markupVal = parseFloat(item.markup || 0).toFixed(2);
+
+        tbody.innerHTML += `
+          <tr>
+            <td><span class="badge bg-light text-dark border">${item.KdBar}</span></td>
+            <td>${item.Barcode || '-'}</td>
+            <td class="fw-semibold">${item.Nmbar}</td>
+            <td>${item.KdKel || '-'}</td>
+            <td>${item.SatKecil || 'PCS'}</td>
+            <td class="text-end">${formatNumber(item.HBeli)}</td>
+            <td class="text-end fw-semibold text-primary">${formatNumber(item.HJual)}</td>
+            <td class="text-end">${markupVal}%</td>
+            <td class="text-end fw-bold">${formatNumber(item.Stok ?? item.StAwal)}</td>
+            <td>${item.RAK || '-'}</td>
+            <td>${item.KDSUPP || '-'}</td>
+            <td class="text-center">
+              <div class="d-flex justify-content-center gap-1">
+                <button class="btn btn-sm btn-outline-warning" onclick="openEditModal('${item.KdBar}')" title="Edit barang">
+                  <i class="bi bi-pencil-square"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteBarang('${item.KdBar}')" title="Hapus barang">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+      if (!['admin', 'bos'].includes(currentUser.Role)) {
+        tbody.querySelectorAll('button[onclick^="deleteBarang"]').forEach(button => button.remove());
+      }
+    }
+
+    function renderPagination(pg) {
+      document.getElementById('totalItemsBadge').innerText = `Total: ${pg.totalItems}`;
+      document.getElementById('paginationInfo').innerText = `Halaman ${pg.currentPage} dari ${pg.totalPages} (${pg.totalItems} item)`;
+
+      const container = document.getElementById('paginationControls');
+      container.innerHTML = '';
+
+      if (pg.totalPages <= 1) return;
+
+      container.innerHTML += `
+        <li class="page-item ${pg.currentPage === 1 ? 'disabled' : ''}">
+          <a class="page-link" href="#" onclick="loadDataBarang(${pg.currentPage - 1}); return false;">Prev</a>
+        </li>
+      `;
+
+      for (let i = 1; i <= pg.totalPages; i++) {
+        if (i === 1 || i === pg.totalPages || (i >= pg.currentPage - 2 && i <= pg.currentPage + 2)) {
+          container.innerHTML += `
+            <li class="page-item ${i === pg.currentPage ? 'active' : ''}">
+              <a class="page-link" href="#" onclick="loadDataBarang(${i}); return false;">${i}</a>
+            </li>
+          `;
+        }
+      }
+
+      container.innerHTML += `
+        <li class="page-item ${pg.currentPage === pg.totalPages ? 'disabled' : ''}">
+          <a class="page-link" href="#" onclick="loadDataBarang(${pg.currentPage + 1}); return false;">Next</a>
+        </li>
+      `;
+    }
+
+    function openAddModal() {
+      document.getElementById('formBarang').reset();
+      document.getElementById('modalBarangTitle').innerText = 'Tambah Barang Baru';
+      editingKdBar = null;
+      document.getElementById('inputKdKel').value = kelompokOptions.includes('UM') ? 'UM' : (kelompokOptions[0] || '');
+      document.getElementById('inputSatKecil').value = 'PCS';
+      document.getElementById('inputRak').value = '0';
+      document.getElementById('inputWarna').value = '0';
+      document.getElementById('inputUkuran').value = '0';
+      document.getElementById('inputMarkup').textContent = '0%';
+      updateNextKdBar();
+      modalInstance.show();
+    }
+
+    function openEditModal(kdBar) {
+      const item = itemsCache[kdBar];
+      if (!item) return;
+
+      editingKdBar = kdBar;
+      document.getElementById('modalBarangTitle').innerText = 'Edit Barang: ' + item.KdBar;
+      document.getElementById('inputKdBar').textContent = item.KdBar;
+
+      document.getElementById('inputBarcode').value = item.Barcode || '';
+      document.getElementById('inputKdKel').value = item.KdKel || 'UM';
+      document.getElementById('inputNmbar').value = item.Nmbar || '';
+      document.getElementById('inputSatKecil').value = item.SatKecil || 'PCS';
+      document.getElementById('inputHBeli').value = item.HBeli || 0;
+      document.getElementById('inputHJual').value = item.HJual || 0;
+      document.getElementById('inputStAwal').value = item.StAwal || 0;
+      document.getElementById('inputRak').value = item.RAK || '0';
+      document.getElementById('inputKdSupp').value = item.KDSUPP || '';
+      document.getElementById('inputWarna').value = item.WARNA || '0';
+      document.getElementById('inputUkuran').value = item.UKURAN || '0';
+
+      updateModalMarkup();
+      modalInstance.show();
+    }
+
+    async function deleteBarang(kdBar) {
+      const item = itemsCache[kdBar];
+      if (!item || !confirm(`Hapus barang "${item.Nmbar}" (${kdBar})? Tindakan ini tidak bisa dibatalkan.`)) return;
+
+      try {
+        const res = await fetch(`/api/barang/${encodeURIComponent(kdBar)}`, { method: 'DELETE' });
+        const result = await res.json();
+
+        if (result.success) {
+          alert(result.message);
+          loadDataBarang();
+        } else {
+          alert('Gagal: ' + result.message);
+        }
+      } catch (err) {
+        console.error('Error delete:', err);
+        alert('Terjadi kesalahan koneksi ke server.');
+      }
+    }
+
+    document.getElementById('formBarang').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const isEdit = Boolean(editingKdBar);
+      const kdBar = editingKdBar || '';
+      const selectedKdKel = document.getElementById('inputKdKel').value.trim() || 'UM';
+      if (isEdit && itemsCache[kdBar]?.KdKel !== selectedKdKel &&
+          !confirm(`Kelompok berubah. Kode barang akan diganti menjadi ${document.getElementById('inputKdBar').textContent} dan referensi transaksi/riwayat stok ikut diperbarui. Lanjutkan?`)) {
+        return;
+      }
+
+      const payload = {
+        KdBar: isEdit ? kdBar : '',
+        Barcode: document.getElementById('inputBarcode').value.trim(),
+        KdKel: selectedKdKel,
+        Nmbar: document.getElementById('inputNmbar').value.trim(),
+        SatKecil: document.getElementById('inputSatKecil').value.trim() || 'PCS',
+        HBeli: parseFloat(document.getElementById('inputHBeli').value) || 0,
+        HJual: parseFloat(document.getElementById('inputHJual').value) || 0,
+        StAwal: parseFloat(document.getElementById('inputStAwal').value) || 0,
+        RAK: document.getElementById('inputRak').value.trim(),
+        KDSUPP: document.getElementById('inputKdSupp').value.trim(),
+        WARNA: document.getElementById('inputWarna').value.trim(),
+        UKURAN: document.getElementById('inputUkuran').value.trim()
+      };
+
+      const url = isEdit ? `/api/barang/${kdBar}` : '/api/barang';
+      const method = isEdit ? 'PUT' : 'POST';
+
+      try {
+        const res = await fetch(url, {
+          method: method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await res.json();
+
+        if (result.success) {
+          alert(result.newKdBar && result.newKdBar !== kdBar ? `${result.message}\nKode barang baru: ${result.newKdBar}` : result.message);
+          modalInstance.hide();
+          loadDataBarang();
+        } else if (result.duplicate) {
+          const duplicate = result.duplicate;
+          const shouldEdit = confirm(`${result.message}\n\nBuka barang tersebut untuk diperbarui?`);
+          if (shouldEdit) {
+            itemsCache[duplicate.KdBar] = duplicate;
+            openEditModal(duplicate.KdBar);
+          }
+        } else {
+          alert('Gagal: ' + result.message);
+        }
+      } catch (err) {
+        console.error('Error save:', err);
+        alert('Terjadi kesalahan koneksi ke server.');
+      }
+    });
+  </script>
+</body>
+</html>
