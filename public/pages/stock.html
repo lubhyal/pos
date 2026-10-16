@@ -1,41 +1,35 @@
-<div class="container-fluid px-4" id="stockView">
-    <!-- Panel Filter dan Pencarian -->
-    <div class="card shadow-sm mb-3">
-      <div class="card-body py-3">
-        <h6 class="card-title fw-bold text-secondary mb-2"><i class="bi bi-funnel me-1"></i> PENCARIAN & FILTER</h6>
-        <div class="row g-2">
-          <div class="col-md-3">
-            <label class="form-label small text-muted mb-1">Nama Barang</label>
-            <input type="text" id="searchName" class="form-control form-control-sm" placeholder="Cari Nama Barang...">
-          </div>
-          <div class="col-md-3">
-            <label class="form-label small text-muted mb-1">Barcode</label>
-            <input type="text" id="searchBarcode" class="form-control form-control-sm" placeholder="Scan / Cari Barcode...">
-          </div>
-          <div class="col-md-2">
-            <label class="form-label small text-muted mb-1">Kode Barang (KdBar)</label>
-            <input type="text" id="searchKdBar" class="form-control form-control-sm" placeholder="Cari Kode Barang...">
-          </div>
-          <div class="col-md-2">
-            <label class="form-label small text-muted mb-1">Kelompok (KdKel)</label>
-            <select id="filterKdKel" class="form-select form-select-sm">
-              <option value="">-- Semua Kelompok --</option>
-            </select>
-          </div>
-          <div class="col-md-2">
-            <label class="form-label small text-muted mb-1">Lokasi Rak (RAK)</label>
-            <select id="filterRak" class="form-select form-select-sm">
-              <option value="">-- Semua Lokasi Rak --</option>
-            </select>
-          </div>
-        </div>
+<div class="container-fluid px-4 d-none" id="stockView">
+    <div class="card mb-3 filter-panel">
+      <div class="card-header d-flex justify-content-between align-items-center py-2">
+        <span><i class="bi bi-funnel me-1"></i> Filter &amp; Urutan</span>
+        <button class="btn btn-sm btn-glass" type="button" data-bs-toggle="collapse" data-bs-target="#stockFilters" aria-expanded="false" aria-controls="stockFilters"><i class="bi bi-sliders me-1"></i> Tampilkan</button>
       </div>
+      <div class="collapse" id="stockFilters"><div class="card-body"><div class="row g-2">
+        <div class="col-6 col-md-3 col-xl-2"><label class="form-label">Nama barang</label><input type="text" class="form-control form-control-sm" id="searchName" data-filter="searchName" placeholder="Cari nama"></div>
+        <div class="col-6 col-md-3 col-xl-2"><label class="form-label">Kode</label><input type="text" class="form-control form-control-sm" id="searchKdBar" data-filter="searchKdBar" placeholder="Kode"></div>
+        <div class="col-6 col-md-3 col-xl-2"><label class="form-label">Barcode</label><input type="text" class="form-control form-control-sm" id="searchBarcode" data-filter="searchBarcode" placeholder="Barcode"></div>
+        <div class="col-6 col-md-3 col-xl-2"><label class="form-label">Kelompok</label><select id="filterKdKel" data-filter="filterKdKel" class="form-select form-select-sm"><option value="">Semua</option></select></div>
+        <div class="col-6 col-md-3 col-xl-2"><label class="form-label">Satuan</label><input type="text" class="form-control form-control-sm" data-filter="filterSatuan" placeholder="Satuan"></div>
+        <div class="col-6 col-md-3 col-xl-2"><label class="form-label">Rak</label><select id="filterRak" data-filter="filterRak" class="form-select form-select-sm"><option value="">Semua</option></select></div>
+        <div class="col-6 col-md-3 col-xl-2"><label class="form-label">Supplier</label><input type="text" class="form-control form-control-sm" data-filter="filterSupplier" placeholder="Supplier"></div>
+        <div class="col-6 col-md-3 col-xl-2"><label class="form-label">Harga beli</label><div class="range-pair"><input type="number" step="any" class="form-control form-control-sm" data-filter="filterHBeliMin" placeholder="Min" inputmode="decimal"><input type="number" step="any" class="form-control form-control-sm" data-filter="filterHBeliMax" placeholder="Maks" inputmode="decimal"></div></div>
+        <div class="col-6 col-md-3 col-xl-2"><label class="form-label">Harga jual</label><div class="range-pair"><input type="number" step="any" class="form-control form-control-sm" data-filter="filterHJualMin" placeholder="Min" inputmode="decimal"><input type="number" step="any" class="form-control form-control-sm" data-filter="filterHJualMax" placeholder="Maks" inputmode="decimal"></div></div>
+        <div class="col-6 col-md-3 col-xl-2"><label class="form-label">Markup (%)</label><div class="range-pair"><input type="number" step="any" class="form-control form-control-sm" data-filter="filterMarkupMin" placeholder="Min" inputmode="decimal"><input type="number" step="any" class="form-control form-control-sm" data-filter="filterMarkupMax" placeholder="Maks" inputmode="decimal"></div></div>
+        <div class="col-6 col-md-3 col-xl-2"><label class="form-label">Stok</label><div class="range-pair"><input type="number" step="any" class="form-control form-control-sm" data-filter="filterStokMin" placeholder="Min" inputmode="decimal"><input type="number" step="any" class="form-control form-control-sm" data-filter="filterStokMax" placeholder="Maks" inputmode="decimal"></div></div>
+        <div class="col-6 col-md-3 col-xl-2"><label class="form-label">Urutkan</label>
+          <select id="sortField" class="form-select form-select-sm" onchange="applySortSelect()">
+            <option value="KdBar">Kode</option><option value="Nmbar">Nama barang</option><option value="Barcode">Barcode</option><option value="KdKel">Kelompok</option><option value="SatKecil">Satuan</option>
+            <option value="HBeli">Harga beli</option><option value="HJual">Harga jual</option><option value="Markup">Markup</option><option value="Stok">Stok</option><option value="RAK">Rak</option><option value="KDSUPP">Supplier</option>
+          </select></div>
+        <div class="col-6 col-md-3 col-xl-2"><label class="form-label">Arah</label>
+          <select id="sortDir" class="form-select form-select-sm" onchange="applySortSelect()"><option value="asc">A-Z / Kecil-Besar</option><option value="desc">Z-A / Besar-Kecil</option></select></div>
+        <div class="col-12 col-xl-2 d-flex align-items-end"><button class="btn btn-sm btn-outline-danger w-100" type="button" onclick="resetStockFilters()"><i class="bi bi-x-circle me-1"></i> Reset</button></div>
+      </div></div></div>
     </div>
-
     <!-- Tabel Data Stok -->
     <div class="card shadow-sm">
       <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center py-2 gap-2">
-        <h6 class="mb-0 fw-bold">Daftar Stok <span class="badge bg-primary ms-1" id="totalItemsBadge">Total: 0</span></h6>
+        <h6 class="mb-0 fw-bold"><i class="bi bi-boxes me-1"></i> Daftar Stok <span class="badge bg-primary ms-1" id="totalItemsBadge">Total: 0</span></h6>
         <div class="d-flex flex-wrap justify-content-end gap-2">
           <button class="btn btn-sm btn-outline-secondary" onclick="downloadExcelTemplate()" title="Unduh format Excel">
             <i class="bi bi-file-earmark-spreadsheet me-1"></i> Template
@@ -51,20 +45,20 @@
       </div>
       <div class="card-body p-0">
         <div class="table-responsive">
-          <table class="table table-hover table-striped align-middle mb-0">
-            <thead class="table-light">
+          <table class="table table-hover align-middle mb-0">
+            <thead>
               <tr>
-                <th>KdBar</th>
-                <th>Barcode</th>
-                <th>Nama Barang</th>
-                <th>Kelompok</th>
-                <th>Satuan</th>
-                <th class="text-end">H. Beli</th>
-                <th class="text-end">H. Jual</th>
-                <th class="text-end">Markup (%)</th>
-                <th class="text-end">Stok</th>
-                <th>Rak</th>
-                <th>Supplier</th>
+                <th class="sortable" data-sort="KdBar" onclick="sortStock('KdBar')">KdBar<i class="sort-ind bi bi-arrow-down-up"></i></th>
+                <th class="sortable" data-sort="Barcode" onclick="sortStock('Barcode')">Barcode<i class="sort-ind bi bi-arrow-down-up"></i></th>
+                <th class="sortable" data-sort="Nmbar" onclick="sortStock('Nmbar')">Nama Barang<i class="sort-ind bi bi-arrow-down-up"></i></th>
+                <th class="sortable" data-sort="KdKel" onclick="sortStock('KdKel')">Kelompok<i class="sort-ind bi bi-arrow-down-up"></i></th>
+                <th class="sortable" data-sort="SatKecil" onclick="sortStock('SatKecil')">Satuan<i class="sort-ind bi bi-arrow-down-up"></i></th>
+                <th class="text-end sortable" data-sort="HBeli" onclick="sortStock('HBeli')">H. Beli<i class="sort-ind bi bi-arrow-down-up"></i></th>
+                <th class="text-end sortable" data-sort="HJual" onclick="sortStock('HJual')">H. Jual<i class="sort-ind bi bi-arrow-down-up"></i></th>
+                <th class="text-end sortable" data-sort="Markup" onclick="sortStock('Markup')">Markup (%)<i class="sort-ind bi bi-arrow-down-up"></i></th>
+                <th class="text-end sortable" data-sort="Stok" onclick="sortStock('Stok')">Stok<i class="sort-ind bi bi-arrow-down-up"></i></th>
+                <th class="sortable" data-sort="RAK" onclick="sortStock('RAK')">Rak<i class="sort-ind bi bi-arrow-down-up"></i></th>
+                <th class="sortable" data-sort="KDSUPP" onclick="sortStock('KDSUPP')">Supplier<i class="sort-ind bi bi-arrow-down-up"></i></th>
                 <th class="text-center">Aksi</th>
               </tr>
             </thead>

@@ -1,16 +1,56 @@
-<div class="container-fluid px-4 d-none" id="cashierReportView">
-    <div class="card shadow-sm mb-3"><div class="card-body"><div class="row g-2 align-items-end">
-      <div class="col-md-4"><label for="cashierReportFrom" class="form-label small">Dari tanggal</label><input id="cashierReportFrom" type="date" class="form-control"></div>
-      <div class="col-md-4"><label for="cashierReportTo" class="form-label small">Sampai tanggal</label><input id="cashierReportTo" type="date" class="form-control"></div>
-      <div class="col-md-4 d-flex gap-2">
-        <button class="btn btn-primary flex-grow-1" onclick="loadCashierReport()"><i class="bi bi-search me-1"></i> Tampilkan</button>
-        <button class="btn btn-outline-light" onclick="downloadCashierReportPdf()" title="Unduh PDF"><i class="bi bi-file-earmark-pdf"></i></button>
+<div class="container-fluid px-3 px-lg-4 d-none" id="cashierReportView">
+  <div class="card shadow-sm mb-3"><div class="card-body">
+    <div class="row g-2 align-items-end">
+      <div class="col-6 col-md-3 col-xl-2"><label for="cashierReportFrom" class="form-label small mb-1">Dari tanggal</label><input id="cashierReportFrom" type="date" class="form-control form-control-sm"></div>
+      <div class="col-6 col-md-3 col-xl-2"><label for="cashierReportTo" class="form-label small mb-1">Sampai tanggal</label><input id="cashierReportTo" type="date" class="form-control form-control-sm"></div>
+      <div class="col-12 col-md-3 col-xl-2 d-none" id="srCashierWrap"><label for="srCashier" class="form-label small mb-1">Kasir</label><select id="srCashier" class="form-select form-select-sm"><option value="">Semua kasir</option></select></div>
+      <div class="col-12 col-xl d-flex flex-wrap gap-1 justify-content-xl-end">
+        <button class="btn btn-sm btn-outline-secondary" onclick="setSalesRange('today')">Hari ini</button>
+        <button class="btn btn-sm btn-outline-secondary" onclick="setSalesRange('week')">7 hari</button>
+        <button class="btn btn-sm btn-outline-secondary" onclick="setSalesRange('month')">Bulan ini</button>
+        <button class="btn btn-sm btn-primary" onclick="loadCashierReport()"><i class="bi bi-search me-1"></i> Tampilkan</button>
+        <button class="btn btn-sm btn-outline-secondary" onclick="downloadCashierReportPdf()" title="Unduh PDF"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</button>
       </div>
-    </div></div></div>
-    <div class="row g-3 mb-3">
-      <div class="col-sm-6 col-xl-3"><div class="card shadow-sm"><div class="card-body"><div class="text-muted small">Total Penjualan</div><div class="fs-4 fw-bold" id="cashierReportTotal">Rp0</div><div class="small" id="cashierReportCount">0 transaksi</div></div></div></div>
-      <div class="col-sm-6 col-xl-3"><div class="card shadow-sm"><div class="card-body"><div class="text-muted small">Rata-rata per Transaksi</div><div class="fs-4 fw-bold" id="cashierReportAverage">Rp0</div></div></div></div>
     </div>
-    <div class="card shadow-sm mb-3"><div class="card-header fw-bold">Grafik Penjualan per Jam</div><div class="card-body"><canvas id="cashierHourlyChart" height="90"></canvas></div></div>
-    <div class="card shadow-sm"><div class="card-header fw-bold">Rincian Transaksi</div><div class="table-responsive"><table class="table table-sm mb-0"><thead class="table-light"><tr><th>Tanggal</th><th>Jam</th><th>No. Faktur</th><th>Kasir</th><th class="text-end">Total</th></tr></thead><tbody id="cashierReportBody"></tbody></table></div></div>
+  </div></div>
+
+  <div class="row g-3 mb-3" id="srCards"></div>
+
+  <ul class="nav nav-pills report-tabs mb-3 flex-nowrap overflow-auto" id="srTabs">
+    <li class="nav-item"><button class="nav-link active" data-srtab="overview"><i class="bi bi-speedometer2 me-1"></i>Ringkasan</button></li>
+    <li class="nav-item"><button class="nav-link" data-srtab="sales"><i class="bi bi-receipt me-1"></i>Transaksi</button></li>
+    <li class="nav-item"><button class="nav-link" data-srtab="items"><i class="bi bi-basket me-1"></i>Barang Terjual</button></li>
+    <li class="nav-item"><button class="nav-link" data-srtab="cash"><i class="bi bi-cash-coin me-1"></i>Setoran &amp; Selisih</button></li>
+  </ul>
+
+  <div data-srpane="overview">
+    <div class="row g-3">
+      <div class="col-lg-8"><div class="card shadow-sm h-100"><div class="card-header fw-bold">Penjualan per Hari</div><div class="card-body"><div class="chart-box"><canvas id="srDaily"></canvas></div></div></div></div>
+      <div class="col-lg-4" id="srCashierChartWrap"><div class="card shadow-sm h-100"><div class="card-header fw-bold">Per Kasir</div><div class="card-body"><div class="chart-box"><canvas id="srCashierChart"></canvas></div></div></div></div>
+      <div class="col-lg-7"><div class="card shadow-sm h-100"><div class="card-header fw-bold">Penjualan per Jam</div><div class="card-body"><div class="chart-box"><canvas id="cashierHourlyChart"></canvas></div></div></div></div>
+      <div class="col-lg-5"><div class="card shadow-sm h-100"><div class="card-header fw-bold">10 Barang Terlaris</div><div class="card-body"><div class="chart-box"><canvas id="srTop"></canvas></div></div></div></div>
+    </div>
   </div>
+
+  <div class="d-none" data-srpane="sales">
+    <div class="card shadow-sm"><div class="card-header d-flex flex-wrap gap-2 align-items-center"><span class="fw-bold me-auto">Rincian Transaksi</span>
+      <input id="srSalesSearch" type="search" class="form-control form-control-sm report-search" placeholder="Cari faktur / kasir...">
+      <button class="btn btn-sm btn-outline-secondary" onclick="exportSalesCsv('sales')"><i class="bi bi-download me-1"></i>CSV</button></div>
+      <div class="table-responsive report-scroll"><table class="table table-sm table-hover mb-0 report-table"><thead><tr><th>Tanggal</th><th>Jam</th><th>No. Faktur</th><th>Kasir</th><th class="text-end">Diskon</th><th class="text-end">Total</th><th>Status</th><th></th></tr></thead><tbody id="cashierReportBody"></tbody></table></div></div>
+  </div>
+
+  <div class="d-none" data-srpane="items">
+    <div class="card shadow-sm"><div class="card-header d-flex flex-wrap gap-2 align-items-center"><span class="fw-bold me-auto">Barang Terjual</span>
+      <input id="srItemsSearch" type="search" class="form-control form-control-sm report-search" placeholder="Cari barang...">
+      <button class="btn btn-sm btn-outline-secondary" onclick="exportSalesCsv('items')"><i class="bi bi-download me-1"></i>CSV</button></div>
+      <div class="table-responsive report-scroll"><table class="table table-sm table-hover mb-0 report-table"><thead><tr><th>#</th><th>Kode</th><th>Nama Barang</th><th class="text-end">Terjual</th><th>Satuan</th><th class="text-end">Nilai</th></tr></thead><tbody id="srItemsBody"></tbody></table></div></div>
+  </div>
+
+  <div class="d-none" data-srpane="cash">
+    <div class="alert alert-info small py-2" id="srCashHint"></div>
+    <div class="card shadow-sm mb-3"><div class="card-header fw-bold">Akumulasi Selisih (seluruh waktu)</div>
+      <div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>Kasir</th><th class="text-end">Hari tercatat</th><th class="text-end">Total Minus</th><th class="text-end">Total Plus</th><th class="text-end">Saldo Selisih</th></tr></thead><tbody id="cashTotalsBody"></tbody></table></div></div>
+    <div class="card shadow-sm"><div class="card-header fw-bold">Setoran Harian</div>
+      <div class="table-responsive report-scroll"><table class="table table-sm align-middle mb-0 report-table"><thead><tr><th>Tanggal</th><th>Kasir</th><th class="text-end">Trx</th><th class="text-end">Penjualan</th><th class="text-end">Uang Sistem</th><th style="min-width:150px">Uang Real</th><th class="text-end">Selisih</th><th style="min-width:130px">Catatan</th><th></th></tr></thead><tbody id="cashBody"></tbody></table></div></div>
+  </div>
+</div>

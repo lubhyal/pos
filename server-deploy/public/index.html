@@ -1,45 +1,111 @@
 <!DOCTYPE html>
-<html lang="id" data-bs-theme="dark">
+<html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Aplikasi Manajemen Stok Barang</title>
-  <!-- Bootstrap 5 CSS CDN (URL Sudah Diperbaiki) -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <script>document.documentElement.setAttribute('data-bs-theme', localStorage.getItem('theme') || 'light');</script>
+  <!-- Bootstrap 5.3 (versi stabil terbaru; Bootstrap 6 belum dirilis) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <style>
-    body { background-color: #111a18; color: #e7efec; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    .card { --bs-card-bg: #17211f; --bs-card-border-color: #35443f; }
-    .card-header-custom { background-color: #192725; color: white; }
-    .card-header, .card-footer { background-color: #1c2926 !important; border-color: #35443f; }
-    .bg-white, .bg-light { background-color: #1c2926 !important; }
-    .text-dark { color: #e7efec !important; }
-    .text-muted, .text-secondary { color: #a8b8b2 !important; }
-    .form-control, .form-select { background-color: #111a18; color: #e7efec; border-color: #445650; }
-    .form-control::placeholder { color: #8fa19a; }
-    .form-control:focus, .form-select:focus { background-color: #111a18; color: #e7efec; border-color: #69b8a4; box-shadow: 0 0 0 .2rem rgb(105 184 164 / 20%); }
-    .table { --bs-table-bg: #17211f; --bs-table-color: #e7efec; --bs-table-striped-bg: #1c2926; --bs-table-striped-color: #e7efec; --bs-table-hover-bg: #263632; --bs-table-hover-color: #f4faf7; --bs-table-border-color: #35443f; }
-    .table-light { --bs-table-bg: #263632; --bs-table-color: #e7efec; }
-    .list-group-item { background-color: #17211f; color: #e7efec; border-color: #35443f; }
-    .modal-content { background-color: #17211f; border-color: #35443f; }
-    .page-link { background-color: #17211f; border-color: #35443f; color: #8fd0bd; }
-    .page-item.active .page-link { background-color: #26715f; border-color: #26715f; color: #fff; }
+    :root { --sidebar-w: 260px; --accent: #4f7cff; --glass-bg: rgba(255,255,255,.58); --glass-border: rgba(255,255,255,.75); --glass-shadow: 0 8px 32px rgba(31,38,135,.12); }
+    [data-bs-theme="dark"] { --glass-bg: rgba(28,34,56,.55); --glass-border: rgba(255,255,255,.1); --glass-shadow: 0 8px 32px rgba(0,0,0,.35); }
+    body { font-family: 'Segoe UI', 'Source Sans 3', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 40%, #dbeafe 70%, #d1fae5 100%) fixed; min-height: 100vh; }
+    [data-bs-theme="dark"] body { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 45%, #0c2a3d 100%) fixed; }
+    body::before, body::after { content: ''; position: fixed; z-index: -1; border-radius: 50%; filter: blur(90px); opacity: .45; pointer-events: none; }
+    body::before { width: 420px; height: 420px; background: #8b5cf6; top: -120px; right: 10%; }
+    body::after { width: 380px; height: 380px; background: #06b6d4; bottom: -120px; left: 25%; }
+    .card, .modal-content, .list-group-item, .app-footer, .topbar { background: var(--glass-bg) !important; -webkit-backdrop-filter: blur(16px) saturate(160%); backdrop-filter: blur(16px) saturate(160%); border: 1px solid var(--glass-border); }
+    .card { box-shadow: var(--glass-shadow); border-radius: 1rem; }
+    .card-header, .card-footer { background: transparent !important; border-color: var(--glass-border); }
+    .card-header { font-weight: 600; }
+    .table { --bs-table-bg: transparent; --bs-table-striped-bg: rgba(79,124,255,.06); --bs-table-hover-bg: rgba(79,124,255,.12); }
     .table-responsive { max-height: 62vh; overflow-y: auto; }
-    .table sticky th { position: sticky; top: 0; background-color: #f8fafc; z-index: 1; }
-    .topbar { position: sticky; top: 0; z-index: 1030; }
-    .app-layout { display: flex; align-items: flex-start; }
-    .sidebar { --bs-offcanvas-width: 260px; --bs-offcanvas-bg: #16211f; --bs-offcanvas-color: #e7efec; --bs-offcanvas-border-color: #2a3835; flex: 0 0 auto; }
-    .sidebar .sidebar-heading { display: block; font-size: .68rem; text-transform: uppercase; letter-spacing: .05em; color: #7d938c; padding: .85rem .6rem .3rem; }
+    .table > thead th { white-space: nowrap; position: sticky; top: 0; z-index: 2; background: var(--bs-body-bg) !important; background-image: linear-gradient(rgba(79,124,255,.14), rgba(79,124,255,.14)); }
+    .table .filter-row th { top: 2.4rem; padding: .35rem .4rem; font-weight: 400; background-image: none; }
+    .filter-row .form-control, .filter-row .form-select { min-width: 5.2rem; }
+    .filter-row .range-pair { display: flex; gap: .25rem; min-width: 10rem; }
+    th.sortable { cursor: pointer; user-select: none; }
+    th.sortable:hover { color: var(--accent); }
+    th.sortable .sort-ind { opacity: .35; font-size: .75rem; margin-left: .2rem; }
+    th.sortable.sorted .sort-ind { opacity: 1; color: var(--accent); }
+    .form-control, .form-select { background-color: rgba(255,255,255,.6); border-color: rgba(120,130,160,.3); border-radius: .6rem; }
+    [data-bs-theme="dark"] .form-control, [data-bs-theme="dark"] .form-select { background-color: rgba(15,23,42,.5); }
+    .form-control:focus, .form-select:focus { box-shadow: 0 0 0 .2rem rgba(79,124,255,.25); border-color: var(--accent); }
+    .btn { border-radius: .6rem; }
+    .btn-primary { background: linear-gradient(135deg, #4f7cff, #7c4dff); border: 0; box-shadow: 0 4px 14px rgba(79,124,255,.4); }
+    .btn-primary:hover, .btn-primary:focus { background: linear-gradient(135deg, #3f6bf0, #6c3df0); }
+    .btn-success { background: linear-gradient(135deg, #11998e, #38ef7d); border: 0; color: #053b2f; }
+    .btn-success:hover { background: linear-gradient(135deg, #0e8a80, #2fdc70); color: #053b2f; }
+    .btn-glass { background: var(--glass-bg); border: 1px solid var(--glass-border); backdrop-filter: blur(10px); }
+    .text-negative { color: var(--bs-danger) !important; }
+    .modal-content { border-radius: 1rem; }
+    .topbar { position: sticky; top: 0; z-index: 1030; height: 56px; padding-block: 0; border-width: 0 0 1px; }
+    .app-layout { display: flex; align-items: flex-start; min-height: 100vh; }
+    .sidebar { --bs-offcanvas-width: var(--sidebar-w); --bs-offcanvas-color: #cbd5f5; --bs-offcanvas-border-color: transparent; flex: 0 0 auto; }
+    .sidebar, .sidebar .offcanvas-body { background: linear-gradient(180deg, #1e1b4b 0%, #312e81 55%, #1e3a8a 100%) !important; color: #cbd5f5; }
+    .sidebar .brand { display: flex; align-items: center; gap: .6rem; height: 56px; padding: 0 1rem; color: #fff; font-weight: 700; font-size: 1.05rem; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,.12); flex: 0 0 auto; }
+    .sidebar .brand i { color: #a5b4fc; font-size: 1.4rem; }
+    .sidebar .sidebar-heading { display: block; font-size: .68rem; text-transform: uppercase; letter-spacing: .08em; color: #8b95d6; padding: .95rem .75rem .3rem; }
     .sidebar .sidebar-heading:first-child { padding-top: .1rem; }
-    .sidebar .nav-link { display: flex; align-items: center; gap: .55rem; width: 100%; text-align: left; color: #c9d6d1; padding: .55rem .6rem; border-radius: .45rem; font-size: .875rem; border: 0; background: transparent; }
-    .sidebar .nav-link:hover { background-color: #1f2e2a; color: #fff; }
-    .sidebar .nav-link.active { background-color: #26715f; color: #fff; font-weight: 600; }
+    .sidebar .nav-link { display: flex; align-items: center; gap: .6rem; width: 100%; text-align: left; color: #cbd5f5; padding: .55rem .75rem; border-radius: .7rem; font-size: .9rem; border: 0; background: transparent; margin-bottom: 2px; transition: background .15s, transform .15s; }
+    .sidebar .nav-link:hover { background: rgba(255,255,255,.1); color: #fff; transform: translateX(2px); }
+    .sidebar .nav-link.active { background: linear-gradient(135deg, rgba(79,124,255,.95), rgba(124,77,255,.95)); color: #fff; font-weight: 600; box-shadow: 0 4px 14px rgba(79,124,255,.45); }
     .sidebar .nav-link i { width: 1.1rem; text-align: center; font-size: 1rem; }
-    .main-content { flex: 1 1 0%; min-width: 0; padding-top: 1rem; }
+    .main-wrapper { flex: 1 1 0%; min-width: 0; display: flex; flex-direction: column; min-height: 100vh; }
+    .content-header { padding: 1rem 1.5rem .25rem; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .25rem; }
+    .content-header h1 { font-size: 1.5rem; font-weight: 700; margin: 0; background: linear-gradient(90deg, #4f7cff, #a855f7); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .content-header .breadcrumb { margin: 0; font-size: .85rem; }
+    .main-content { flex: 1 1 0%; min-width: 0; padding-top: .75rem; padding-bottom: 1.5rem; }
+    .app-footer { padding: .75rem 1.5rem; font-size: .8rem; border-width: 1px 0 0; color: var(--bs-secondary-color); }
+    #authScreen { background: transparent; }
+    .stat-card { position: relative; overflow: hidden; color: #fff; border-radius: 1rem; padding: 1.1rem 1.25rem; box-shadow: 0 10px 24px rgba(0,0,0,.18); height: 100%; transition: transform .2s; }
+    .stat-card:hover { transform: translateY(-3px); }
+    .stat-card .stat-icon { position: absolute; right: .9rem; top: .6rem; font-size: 3.2rem; opacity: .25; }
+    .stat-card .stat-label { font-size: .85rem; opacity: .9; }
+    .stat-card .stat-value { font-size: 1.6rem; font-weight: 700; line-height: 1.3; }
+    .stat-card .stat-sub { font-size: .78rem; opacity: .9; }
+    .g-blue { background: linear-gradient(135deg, #4f7cff, #7c4dff); }
+    .g-green { background: linear-gradient(135deg, #11998e, #38ef7d); }
+    .g-orange { background: linear-gradient(135deg, #ff9966, #ff5e62); }
+    .g-purple { background: linear-gradient(135deg, #8e2de2, #e052c0); }
+    .g-teal { background: linear-gradient(135deg, #06b6d4, #3b82f6); }
+    .g-red { background: linear-gradient(135deg, #f43f5e, #be123c); }
+    .mini-stat { display: flex; align-items: center; gap: .9rem; padding: .9rem 1rem; border-radius: 1rem; background: var(--glass-bg); border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow); backdrop-filter: blur(16px); height: 100%; }
+    .mini-icon { width: 46px; height: 46px; border-radius: .9rem; display: grid; place-items: center; color: #fff; font-size: 1.3rem; flex: 0 0 auto; }
+    .mini-value { font-size: 1.25rem; font-weight: 700; line-height: 1.2; }
+    .mini-label { font-size: .78rem; color: var(--bs-secondary-color); }
+    .chart-box { position: relative; height: 280px; }
+    .dash-table { max-height: 300px; }
     @media (min-width: 992px) {
-      .sidebar { position: sticky; top: 56px; height: calc(100vh - 56px); overflow-y: auto; border-right: 1px solid #2a3835; }
+      .sidebar { position: sticky; top: 0; height: 100vh; overflow-y: auto; }
     }
-    @media (max-width: 575.98px) {
+    #stockView .filter-panel .form-label { font-size: .75rem; margin-bottom: .15rem; color: var(--bs-secondary-color); }
+    #stockView .range-pair { display: flex; gap: .35rem; }
+    #stockView .pagination { gap: .25rem; }
+    #stockView .pagination .page-link { border-radius: .6rem !important; min-width: 2.2rem; text-align: center; background: var(--glass-bg); border: 1px solid var(--glass-border); }
+    #stockView .pagination .page-item.active .page-link { background: linear-gradient(135deg, #4f7cff, #7c4dff); color: #fff; border-color: transparent; }
+    @media (max-width: 767.98px) {
+      #stockView .table-responsive { max-height: none; overflow: visible; }
+      #stockView table, #stockView tbody { display: block; width: 100%; min-width: 0 !important; }
+      #stockView thead { display: none; }
+      #stockView tbody tr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .3rem .5rem; margin: .45rem .5rem 0; padding: .5rem .65rem; border: 1px solid var(--glass-border); border-radius: .7rem; background: var(--glass-bg); box-shadow: 0 1px 6px rgba(31,38,135,.08); }
+      #stockView tbody tr:last-child { margin-bottom: .5rem; }
+      #stockView td { display: flex; flex-direction: column; gap: 0; padding: 0 !important; border: 0; background: transparent !important; text-align: left !important; font-size: .8rem; line-height: 1.25; min-width: 0; overflow-wrap: anywhere; }
+      #stockView td::before { content: attr(data-label); color: var(--bs-secondary-color); font-size: .62rem; text-transform: uppercase; letter-spacing: .03em; }
+      #stockView td[data-label="Nama Barang"] { grid-column: 1 / -1; order: -2; font-size: .9rem; }
+      #stockView td[data-label="Nama Barang"]::before { display: none; }
+      #stockView td[data-empty] { display: none; }
+      #stockView td.cell-actions { grid-column: 1 / -1; margin-top: .15rem; }
+      #stockView td.cell-actions::before { display: none; }
+      #stockView td.cell-actions > div { justify-content: stretch !important; }
+      #stockView td.cell-actions .btn { flex: 1 1 0; padding: .1rem .4rem; font-size: .75rem; }
+      #stockView .card-header { padding: .4rem .6rem !important; }
+      #stockView .card-header .btn { flex: 1 1 auto; font-size: .75rem; padding: .15rem .4rem; }
+      #stockView .card-footer { flex-direction: column; gap: .35rem; text-align: center; padding: .4rem !important; }
+      #stockView .pagination { justify-content: center; flex-wrap: nowrap; }
+    }    @media (max-width: 575.98px) {
       html, body { max-width: 100%; overflow-x: hidden; }
       body { font-size: .875rem; }
       .navbar { padding-block: .3rem; margin-bottom: 0 !important; }
@@ -57,14 +123,35 @@
       .card-header, .card-footer { padding: .5rem .65rem !important; }
       .table { font-size: .78rem; }
       .table-responsive { max-height: 48vh; overscroll-behavior: contain; }
-      #stockView table { min-width: 900px; }
       #kasirView .table-responsive, #purchaseView .table-responsive, #opnameView .table-responsive { max-height: 40vh; }
       #kasirView table, #purchaseView table, #opnameView table { min-width: 560px; }
       #purchaseReturnView .table-responsive, #salesReturnView .table-responsive { max-height: 40vh; }
       #purchaseReturnView table, #salesReturnView table { min-width: 600px; }
-      #reportView table { min-width: 520px; }
-      #reportView .fs-4 { font-size: 1.25rem !important; }
-      .pagination { flex-wrap: wrap; justify-content: flex-end; }
+      /* Tema gelap: pastikan semua teks terbaca */
+      [data-bs-theme="dark"] { --bs-body-color: #e2e8f0; --bs-secondary-color: rgba(203,213,225,.8); --bs-heading-color: #f1f5f9; --bs-emphasis-color: #fff; color-scheme: dark; }
+      [data-bs-theme="dark"] body, [data-bs-theme="dark"] .card, [data-bs-theme="dark"] .modal-content, [data-bs-theme="dark"] .dropdown-menu, [data-bs-theme="dark"] .list-group-item, [data-bs-theme="dark"] .offcanvas { color: #e2e8f0; }
+      [data-bs-theme="dark"] .card-header, [data-bs-theme="dark"] .form-label, [data-bs-theme="dark"] label, [data-bs-theme="dark"] h1, [data-bs-theme="dark"] h2, [data-bs-theme="dark"] h3, [data-bs-theme="dark"] h4, [data-bs-theme="dark"] h5, [data-bs-theme="dark"] h6 { color: #f1f5f9; }
+      [data-bs-theme="dark"] .text-muted, [data-bs-theme="dark"] .text-body-secondary, [data-bs-theme="dark"] small { color: rgba(203,213,225,.85) !important; }
+      [data-bs-theme="dark"] .text-dark, [data-bs-theme="dark"] .link-dark { color: #e2e8f0 !important; }
+      [data-bs-theme="dark"] .table { --bs-table-color: #e2e8f0; --bs-table-bg: transparent; --bs-table-striped-color: #e2e8f0; --bs-table-hover-color: #fff; --bs-table-striped-bg: rgba(255,255,255,.04); --bs-table-hover-bg: rgba(255,255,255,.08); --bs-table-border-color: rgba(255,255,255,.1); }
+      [data-bs-theme="dark"] .table > thead th, [data-bs-theme="dark"] .table-light, [data-bs-theme="dark"] .table-light > th, [data-bs-theme="dark"] .table-light > td { --bs-table-bg: #1e293b; --bs-table-color: #f1f5f9; background-color: #1e293b !important; color: #f1f5f9 !important; }
+      [data-bs-theme="dark"] .bg-light, [data-bs-theme="dark"] .bg-white { background-color: rgba(30,41,59,.7) !important; color: #e2e8f0 !important; }
+      [data-bs-theme="dark"] .form-control, [data-bs-theme="dark"] .form-select, [data-bs-theme="dark"] .input-group-text { color: #f1f5f9; border-color: rgba(255,255,255,.18); }
+      [data-bs-theme="dark"] .form-control::placeholder { color: rgba(203,213,225,.6); }
+      [data-bs-theme="dark"] .form-select option { background: #1e293b; color: #f1f5f9; }
+      [data-bs-theme="dark"] .btn-outline-secondary { --bs-btn-color: #cbd5e1; --bs-btn-border-color: rgba(255,255,255,.25); --bs-btn-hover-color: #fff; --bs-btn-hover-bg: rgba(255,255,255,.12); }
+      [data-bs-theme="dark"] .page-link { color: #e2e8f0; background: rgba(30,41,59,.7); border-color: rgba(255,255,255,.12); }
+      [data-bs-theme="dark"] .page-item.active .page-link { color: #fff; }
+      [data-bs-theme="dark"] .text-negative { color: #fb7185 !important; }
+      .report-tabs { gap: .35rem; padding-bottom: .25rem; }
+      .report-tabs .nav-link { white-space: nowrap; border-radius: 999px; padding: .35rem .9rem; font-size: .88rem; color: var(--bs-body-color); background: var(--glass-bg); border: 1px solid var(--glass-border); }
+      .report-tabs .nav-link.active { background: linear-gradient(135deg,#4f7cff,#7c4dff); color: #fff; border-color: transparent; }
+      .report-scroll { max-height: 60vh; overflow: auto; }
+      .report-table th { position: sticky; top: 0; z-index: 1; white-space: nowrap; }
+      .report-search { max-width: 220px; }
+      .rc-icon { width: 2.6rem; height: 2.6rem; border-radius: 12px; display: grid; place-items: center; font-size: 1.25rem; flex: none; }
+      .rc-value { font-size: 1.1rem; overflow-wrap: anywhere; }
+      .min-w-0 { min-width: 0; }      .pagination { flex-wrap: wrap; justify-content: flex-end; }
       .pagination .page-link { padding: .25rem .45rem; }
       .modal-dialog { width: auto; height: calc(100dvh - .8rem); margin: .4rem; display: flex; align-items: center; }
       .modal-content { max-height: 100%; width: 100%; }
@@ -115,34 +202,18 @@
 
   <div id="appShell" class="d-none">
 
-  <!-- Top Navigation Header -->
-  <nav class="navbar navbar-dark card-header-custom topbar shadow-sm">
-    <div class="container-fluid px-3 px-lg-4">
-      <button class="btn btn-outline-light btn-sm d-lg-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav" aria-label="Buka menu">
-        <i class="bi bi-list fs-5"></i>
-      </button>
-      <span class="navbar-brand mb-0 h1 fw-bold flex-grow-1 flex-lg-grow-0"><i class="bi bi-box-seam me-2"></i>ABID KARYA SAYUR</span>
-      <div class="d-flex gap-2 align-items-center">
-        <span class="navbar-text text-white small" id="currentUserLabel"></span>
-        <button class="btn btn-primary btn-sm" id="btnAddProduct" onclick="openAddModal()">
-          <i class="bi bi-plus-lg me-1"></i> <span class="d-none d-sm-inline">Tambah Barang</span>
-        </button>
-        <button class="btn btn-outline-light btn-sm d-none" id="btnManageUsers" onclick="openUserManagement()"><i class="bi bi-people me-1"></i> <span class="d-none d-sm-inline">User</span></button>
-        <button class="btn btn-outline-light btn-sm" id="btnLogout"><i class="bi bi-box-arrow-right me-1"></i> <span class="d-none d-sm-inline">Keluar</span></button>
-      </div>
-    </div>
-  </nav>
-
   <div class="app-layout">
     <aside class="offcanvas-lg offcanvas-start sidebar" tabindex="-1" id="sidebarNav" aria-labelledby="sidebarNavLabel">
-      <div class="offcanvas-header d-lg-none">
-        <h5 class="offcanvas-title" id="sidebarNavLabel"><i class="bi bi-box-seam me-2"></i>Menu</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
-      </div>
-      <div class="offcanvas-body d-flex flex-column p-2 p-lg-3">
+      <div class="d-flex align-items-center">
+        <a class="brand flex-grow-1" href="#" id="sidebarNavLabel"><i class="bi bi-basket3-fill"></i><span>ABID KARYA SAYUR</span></a>
+        <button type="button" class="btn-close btn-close-white d-lg-none me-3" data-bs-dismiss="offcanvas" data-bs-target="#sidebarNav" aria-label="Close"></button>
+      </div>      <div class="offcanvas-body d-flex flex-column p-2 p-lg-3">
         <div class="nav flex-column">
+          <span class="sidebar-heading">Utama</span>
+          <button class="nav-link active" id="btnShowDashboard" onclick="showView('dashboardView'); loadDashboard()"><i class="bi bi-speedometer2"></i> Dashboard</button>
+
           <span class="sidebar-heading">Gudang & Stok</span>
-          <button class="nav-link active" id="btnShowStock" onclick="showView('stockView')"><i class="bi bi-boxes"></i> Stok Barang</button>
+          <button class="nav-link" id="btnShowStock" onclick="showView('stockView')"><i class="bi bi-boxes"></i> Stok Barang</button>
           <button class="nav-link" id="btnShowPurchase" onclick="showView('purchaseView')"><i class="bi bi-truck"></i> Pembelian</button>
           <button class="nav-link" id="btnShowOpname" onclick="showView('opnameView')"><i class="bi bi-clipboard-check"></i> Stok Opname</button>
           <button class="nav-link" id="btnShowPurchaseReturn" onclick="showView('purchaseReturnView'); loadReturnablePurchases()"><i class="bi bi-arrow-return-left"></i> Retur Beli</button>
@@ -154,21 +225,44 @@
 
           <span class="sidebar-heading">Laporan</span>
           <button class="nav-link" id="btnShowCashierReport" onclick="showView('cashierReportView'); loadCashierReport()"><i class="bi bi-bar-chart"></i> Laporan Penjualan</button>
-          <button class="nav-link" id="btnShowReport" onclick="showView('reportView'); loadReport()"><i class="bi bi-graph-up"></i> Laporan</button>
-          <button class="nav-link d-none" id="btnShowTopSelling" onclick="showView('topSellingView'); loadTopSellingReport()"><i class="bi bi-trophy"></i> Barang Terlaris</button>
+          <button class="nav-link" id="btnShowReport" onclick="showView('fullReportView'); loadFullReport()"><i class="bi bi-graph-up"></i> Laporan Lengkap</button>
 
           <span class="sidebar-heading d-none" id="adminSidebarHeading">Administrasi</span>
+          <button class="nav-link d-none" id="btnManageUsers" onclick="openUserManagement()"><i class="bi bi-people"></i> Manajemen User</button>
           <button class="nav-link d-none" id="btnMasterData" onclick="showView('masterView'); loadMasterData()"><i class="bi bi-people"></i> Data Master</button>
           <button class="nav-link d-none" id="btnSettings" onclick="showView('settingsView'); loadSettings()"><i class="bi bi-gear"></i> Pengaturan</button>
         </div>
       </div>
     </aside>
 
+  <div class="main-wrapper">
+  <nav class="navbar topbar shadow-sm">
+    <div class="container-fluid px-3 px-lg-4">
+      <button class="btn btn-outline-secondary btn-sm d-lg-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarNav" aria-controls="sidebarNav" aria-label="Buka menu">
+        <i class="bi bi-list fs-5"></i>
+      </button>
+      <span class="navbar-brand mb-0 h6 fw-semibold flex-grow-1 d-lg-none">ABID KARYA SAYUR</span>
+      <span class="flex-grow-1 d-none d-lg-block"></span>
+      <div class="d-flex gap-2 align-items-center">
+        <span class="navbar-text small text-body-secondary" id="currentUserLabel"><i class="bi bi-person-circle me-1"></i></span>
+        <button class="btn btn-primary btn-sm" id="btnAddProduct" onclick="openAddModal()">
+          <i class="bi bi-plus-lg me-1"></i> <span class="d-none d-sm-inline">Tambah Barang</span>
+        </button>
+        <button class="btn btn-outline-secondary btn-sm" id="btnTheme" onclick="toggleTheme()" title="Ganti tema terang/gelap" aria-label="Ganti tema"><i class="bi bi-moon-stars" id="themeIcon"></i></button>
+        <button class="btn btn-outline-danger btn-sm" id="btnLogout"><i class="bi bi-box-arrow-right me-1"></i> <span class="d-none d-sm-inline">Keluar</span></button>
+      </div>
+    </div>
+  </nav>
+  <div class="content-header">
+    <h1 id="pageTitle">Dashboard</h1>
+    <ol class="breadcrumb"><li class="breadcrumb-item"><i class="bi bi-house-door me-1"></i>Beranda</li><li class="breadcrumb-item active" id="pageCrumb">Dashboard</li></ol>
+  </div>
   <main class="main-content">
       <!-- Menu HTML dimuat dari file di folder pages. -->
     <div id="menuViews"></div>
-
   </main>
+  <footer class="app-footer">ABID KARYA SAYUR &middot; Sistem Kasir &amp; Inventori</footer>
+  </div>
   </div>
 
   <div class="modal fade" id="modalSupplier" tabindex="-1" aria-hidden="true">
@@ -250,24 +344,20 @@
   </div>
 
   <div class="modal fade" id="modalUsers" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg"><div class="modal-content">
-      <div class="modal-header"><h5 class="modal-title fw-bold">Pengelolaan User</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
-      <div class="modal-body">
-        <div class="table-responsive mb-3"><table class="table table-sm align-middle"><thead class="table-light"><tr><th>Kode</th><th>Nama</th><th>Role</th><th>Status</th><th></th></tr></thead><tbody id="usersTableBody"></tbody></table></div>
-        <hr>
-        <h6 id="userFormTitle" class="fw-bold">Tambah User</h6>
-        <form id="userManagementForm"><div class="row g-2">
-          <div class="col-md-3"><label for="managedUserCode" class="form-label small">Kode (maks. 5)</label><input id="managedUserCode" class="form-control form-control-sm" maxlength="5" required></div>
-          <div class="col-md-3"><label for="managedUserName" class="form-label small">Nama</label><input id="managedUserName" class="form-control form-control-sm" maxlength="20" required></div>
-          <div class="col-md-3"><label for="managedUserRole" class="form-label small">Role</label><select id="managedUserRole" class="form-select form-select-sm"><option value="kasir">Kasir</option><option value="gudang">Admin Gudang</option><option value="bos">Bos</option><option value="admin">Admin</option></select></div>
-          <div class="col-md-3"><label for="managedUserActive" class="form-label small">Status</label><select id="managedUserActive" class="form-select form-select-sm"><option value="Y">Aktif</option><option value="N">Nonaktif</option></select></div>
-          <div class="col-md-8"><label for="managedUserPassword" class="form-label small">Password baru (min. 3 karakter)</label><input id="managedUserPassword" type="password" class="form-control form-control-sm" minlength="3" autocomplete="new-password"></div>
-          <div class="col-md-4 d-flex align-items-end gap-2"><button id="saveManagedUser" type="submit" class="btn btn-sm btn-primary">Tambah User</button><button id="cancelEditUser" type="button" class="btn btn-sm btn-outline-secondary d-none" onclick="resetUserForm()">Batal</button></div>
-        </div></form>
-      </div>
+    <div class="modal-dialog"><div class="modal-content">
+      <form id="userManagementForm">
+      <div class="modal-header"><h5 class="modal-title fw-bold" id="userFormTitle">Tambah User</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+      <div class="modal-body"><div class="row g-3">
+        <div class="col-5"><label for="managedUserCode" class="form-label small">Kode (maks. 5)</label><input id="managedUserCode" class="form-control" maxlength="5" required></div>
+        <div class="col-7"><label for="managedUserName" class="form-label small">Nama</label><input id="managedUserName" class="form-control" maxlength="20" required></div>
+        <div class="col-6"><label for="managedUserRole" class="form-label small">Role</label><select id="managedUserRole" class="form-select"><option value="kasir">Kasir</option><option value="gudang">Admin Gudang</option><option value="bos">Bos</option><option value="admin">Admin</option></select></div>
+        <div class="col-6"><label for="managedUserActive" class="form-label small">Status</label><select id="managedUserActive" class="form-select"><option value="Y">Aktif</option><option value="N">Nonaktif</option></select></div>
+        <div class="col-12"><label for="managedUserPassword" class="form-label small" id="managedUserPasswordLabel">Password (min. 3 karakter)</label><input id="managedUserPassword" type="password" class="form-control" minlength="3" autocomplete="new-password"></div>
+      </div></div>
+      <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button id="saveManagedUser" type="submit" class="btn btn-primary">Simpan</button></div>
+      </form>
     </div></div>
-  </div>
-  <section id="receiptPrint" aria-hidden="true"></section>
+  </div>  <section id="receiptPrint" aria-hidden="true"></section>
   </div>
 
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
@@ -275,7 +365,7 @@
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
   <!-- Bootstrap 5 JS Bundle CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
   <!-- Script Logic Application -->
   <script>
@@ -290,10 +380,7 @@
     let kelompokOptions = [];
     let editingKdBar = null;
     let kdBarPreviewRequest = 0;
-    let cashierSalesChart = null;
-    let cashierHourlyChart = null;
     let lastCashierReport = null;
-    let lastTopSellingReport = null;
     const excelFields = ['KdBar', 'Barcode', 'KdKel', 'Nmbar', 'SatKecil', 'HBeli', 'HJual', 'StAwal', 'RAK', 'KDSUPP', 'WARNA', 'UKURAN'];
     const salesCart = new Map();
     const purchaseCart = new Map();
@@ -349,10 +436,11 @@
       usersModalInstance = new bootstrap.Modal(document.getElementById('modalUsers'));
 
       // Fitur pencarian otomatis
-      ['searchName', 'searchBarcode', 'searchKdBar', 'filterKdKel', 'filterRak'].forEach(id => {
-        document.getElementById(id).addEventListener('input', () => {
-          currentPage = 1;
-          loadDataBarang();
+      let filterTimer;
+      document.querySelectorAll('#stockView [data-filter]').forEach(field => {
+        field.addEventListener('input', () => {
+          clearTimeout(filterTimer);
+          filterTimer = setTimeout(() => { currentPage = 1; loadDataBarang(); }, 300);
         });
       });
 
@@ -417,8 +505,6 @@
       document.getElementById('reportTo').value = today;
       document.getElementById('cashierReportFrom').value = today;
       document.getElementById('cashierReportTo').value = today;
-      document.getElementById('topSellingFrom').value = today;
-      document.getElementById('topSellingTo').value = today;
       document.getElementById('opnameDate').value = today;
       document.getElementById('returnPurchaseDate').value = today;
       document.getElementById('returnSaleDate').value = today;
@@ -426,12 +512,26 @@
         document.getElementById(id).addEventListener('input', updateSaleTotals);
         document.getElementById(id).addEventListener('change', updateSaleTotals);
       });
+      document.addEventListener('keydown', event => {
+        const methods = { '1': 'cash', '2': 'qris', '3': 'edc', '4': 'credit' };
+        const view = document.getElementById('kasirView');
+        if (event.altKey && methods[event.key] && view && !view.classList.contains('d-none')) {
+          event.preventDefault();
+          setPaymentMethod(methods[event.key]);
+        }
+      });
+      updateThemeIcon();
+      updateSortIndicators();
+      if (window.innerWidth >= 992) document.getElementById('stockFilters').classList.add('show');
+      setPaymentMethod('cash');
       await initializeAuthentication();
     });
 
     async function loadMenuViews() {
       const menuPages = [
         'master-data.html',
+        'dashboard.html',
+        'users.html',
         'settings.html',
         'purchase-return.html',
         'sales-return.html',
@@ -440,7 +540,6 @@
         'stock-opname.html',
         'sales-report.html',
         'report.html',
-        'top-selling.html',
         'kasir.html',
         'stock.html'
       ];
@@ -540,7 +639,6 @@
       document.getElementById('btnShowKasir').classList.toggle('d-none', !cashier);
       document.getElementById('btnShowPiutang').classList.toggle('d-none', !cashier);
       document.getElementById('btnShowReport').classList.toggle('d-none', !manager);
-      document.getElementById('btnShowTopSelling').classList.toggle('d-none', !manager);
       document.getElementById('btnShowCashierReport').classList.toggle('d-none', !cashier);
       document.getElementById('btnShowPurchase').classList.toggle('d-none', !warehouse);
       document.getElementById('btnShowOpname').classList.toggle('d-none', !warehouse);
@@ -554,6 +652,9 @@
         loadMembers();
       }
       loadBusinessSettings();
+      document.getElementById('btnShowDashboard').classList.toggle('d-none', !manager);
+      if (manager) { showView('dashboardView'); loadDashboard(); }
+      else showView('stockView');
     }
 
     async function loginUser(event) {
@@ -617,10 +718,14 @@
       }
     }
 
+    function escapeHtml(v) { return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); }
+    let managedUsers = [];
+    const roleLabels = { admin: 'Admin', bos: 'Bos', kasir: 'Kasir', gudang: 'Admin Gudang' };
+    const roleBadge = { admin: 'danger', bos: 'warning', kasir: 'primary', gudang: 'info' };
+
     async function openUserManagement() {
       if (!currentUser || !['admin', 'bos'].includes(currentUser.Role)) return;
-      resetUserForm();
-      usersModalInstance.show();
+      showView('usersView');
       await loadManagedUsers();
     }
 
@@ -629,47 +734,71 @@
         const response = await fetch('/api/users');
         const result = await response.json();
         if (!result.success) throw new Error(result.message || 'Gagal memuat user.');
-        const body = document.getElementById('usersTableBody');
-        body.replaceChildren();
-        result.data.forEach(user => {
-          const row = body.insertRow();
-          [user.KdUser, user.Nmuser, ({ admin: 'Admin', bos: 'Bos', kasir: 'Kasir', gudang: 'Admin Gudang' })[user.Role] || user.Role, user.IsActive === 'Y' ? 'Aktif' : 'Nonaktif'].forEach(value => {
-            row.insertCell().textContent = value;
-          });
-          const actionCell = row.insertCell();
-          const edit = document.createElement('button');
-          edit.type = 'button'; edit.className = 'btn btn-sm btn-outline-primary'; edit.textContent = 'Ubah';
-          edit.addEventListener('click', () => editManagedUser(user));
-          actionCell.appendChild(edit);
-        });
+        managedUsers = result.data;
+        renderManagedUsers();
       } catch (err) {
         alert(err.message);
       }
     }
 
-    function resetUserForm() {
-      editingManagedUserCode = null;
-      document.getElementById('userManagementForm').reset();
-      document.getElementById('managedUserCode').readOnly = false;
-      document.getElementById('managedUserActive').value = 'Y';
-      document.getElementById('managedUserPassword').required = true;
-      document.getElementById('userFormTitle').textContent = 'Tambah User';
-      document.getElementById('saveManagedUser').textContent = 'Tambah User';
-      document.getElementById('cancelEditUser').classList.add('d-none');
+    function renderManagedUsers() {
+      const needle = document.getElementById('userSearch').value.trim().toLowerCase();
+      const role = document.getElementById('userRoleFilter').value;
+      const list = managedUsers.filter(u => (!role || u.Role === role) && (!needle || `${u.KdUser} ${u.Nmuser}`.toLowerCase().includes(needle)));
+      document.getElementById('userStats').innerHTML = [
+        ['bi-people', 'primary', 'Total user', managedUsers.length],
+        ['bi-check-circle', 'success', 'Aktif', managedUsers.filter(u => u.IsActive === 'Y').length],
+        ['bi-slash-circle', 'secondary', 'Nonaktif', managedUsers.filter(u => u.IsActive !== 'Y').length],
+        ['bi-cart', 'info', 'Kasir', managedUsers.filter(u => u.Role === 'kasir').length]
+      ].map(([icon, color, label, value]) => reportCard(icon, color, label, formatNumber(value), '&nbsp;').replace('col-lg-4 col-xxl', 'col-lg-3')).join('');
+      const body = document.getElementById('usersTableBody');
+      body.replaceChildren();
+      list.forEach(user => {
+        const row = body.insertRow();
+        row.insertCell().textContent = user.KdUser;
+        const name = row.insertCell(); name.className = 'fw-semibold'; name.textContent = user.Nmuser;
+        const roleCell = row.insertCell();
+        roleCell.innerHTML = `<span class="badge text-bg-${roleBadge[user.Role] || 'secondary'}"></span>`;
+        roleCell.firstChild.textContent = roleLabels[user.Role] || user.Role;
+        const status = row.insertCell();
+        status.innerHTML = `<span class="badge ${user.IsActive === 'Y' ? 'text-bg-success' : 'text-bg-secondary'}">${user.IsActive === 'Y' ? 'Aktif' : 'Nonaktif'}</span>`;
+        const actions = row.insertCell(); actions.className = 'text-end text-nowrap';
+        const edit = document.createElement('button');
+        edit.type = 'button'; edit.className = 'btn btn-sm btn-outline-primary me-1'; edit.title = 'Ubah'; edit.innerHTML = '<i class="bi bi-pencil-square"></i>';
+        edit.addEventListener('click', () => openUserForm(user));
+        const del = document.createElement('button');
+        del.type = 'button'; del.className = 'btn btn-sm btn-outline-danger'; del.title = 'Hapus'; del.innerHTML = '<i class="bi bi-trash"></i>';
+        del.disabled = currentUser && currentUser.KdUser === user.KdUser;
+        del.addEventListener('click', () => deleteManagedUser(user));
+        actions.append(edit, del);
+      });
+      if (!list.length) {
+        const cell = body.insertRow().insertCell(); cell.colSpan = 5; cell.className = 'text-center text-body-secondary py-4'; cell.textContent = 'Tidak ada user.';
+      }
     }
 
-    function editManagedUser(user) {
-      editingManagedUserCode = user.KdUser;
-      document.getElementById('managedUserCode').value = user.KdUser;
-      document.getElementById('managedUserCode').readOnly = true;
-      document.getElementById('managedUserName').value = user.Nmuser;
-      document.getElementById('managedUserRole').value = user.Role;
-      document.getElementById('managedUserActive').value = user.IsActive;
-      document.getElementById('managedUserPassword').value = '';
-      document.getElementById('managedUserPassword').required = false;
-      document.getElementById('userFormTitle').textContent = `Ubah User: ${user.KdUser}`;
-      document.getElementById('saveManagedUser').textContent = 'Simpan Perubahan';
-      document.getElementById('cancelEditUser').classList.remove('d-none');
+    function openUserForm(user) {
+      editingManagedUserCode = user ? user.KdUser : null;
+      document.getElementById('userManagementForm').reset();
+      document.getElementById('managedUserCode').readOnly = Boolean(user);
+      document.getElementById('managedUserCode').value = user ? user.KdUser : '';
+      document.getElementById('managedUserName').value = user ? user.Nmuser : '';
+      document.getElementById('managedUserRole').value = user ? user.Role : 'kasir';
+      document.getElementById('managedUserActive').value = user ? user.IsActive : 'Y';
+      document.getElementById('managedUserPassword').required = !user;
+      document.getElementById('managedUserPasswordLabel').textContent = user ? 'Password baru (kosongkan jika tidak diubah)' : 'Password (min. 3 karakter)';
+      document.getElementById('userFormTitle').textContent = user ? `Ubah User: ${user.KdUser}` : 'Tambah User';
+      usersModalInstance.show();
+    }
+
+    async function deleteManagedUser(user) {
+      if (!confirm(`Hapus user ${user.KdUser} (${user.Nmuser})? Login-nya dihapus, riwayat transaksi tetap tersimpan.`)) return;
+      try {
+        const response = await fetch(`/api/users/${encodeURIComponent(user.KdUser)}`, { method: 'DELETE' });
+        const result = await response.json();
+        if (!result.success) throw new Error(result.message || 'Gagal menghapus user.');
+        await loadManagedUsers();
+      } catch (err) { alert(err.message); }
     }
 
     async function saveManagedUser(event) {
@@ -688,13 +817,19 @@
         });
         const result = await response.json();
         if (!result.success) throw new Error(result.message || 'Gagal menyimpan user.');
-        resetUserForm();
+        usersModalInstance.hide();
         await loadManagedUsers();
       } catch (err) {
         alert(err.message);
       }
     }
 
+    document.addEventListener('input', event => {
+      if (event.target.id === 'userSearch') renderManagedUsers();
+    });
+    document.addEventListener('change', event => {
+      if (event.target.id === 'userRoleFilter') renderManagedUsers();
+    });
     async function loadReceivables() {
       const body = document.getElementById('receivableBody');
       body.replaceChildren();
@@ -741,12 +876,156 @@
     }
 
     const sidebarNavButtonByView = {
-      stockView: 'btnShowStock', kasirView: 'btnShowKasir', piutangView: 'btnShowPiutang',
-      purchaseView: 'btnShowPurchase', opnameView: 'btnShowOpname', reportView: 'btnShowReport',
-      cashierReportView: 'btnShowCashierReport', masterView: 'btnMasterData', settingsView: 'btnSettings',
-      purchaseReturnView: 'btnShowPurchaseReturn', salesReturnView: 'btnShowSalesReturn',
-      topSellingView: 'btnShowTopSelling'
+      dashboardView: 'btnShowDashboard', stockView: 'btnShowStock', kasirView: 'btnShowKasir', piutangView: 'btnShowPiutang',
+      purchaseView: 'btnShowPurchase', opnameView: 'btnShowOpname', fullReportView: 'btnShowReport',
+      cashierReportView: 'btnShowCashierReport', masterView: 'btnMasterData', usersView: 'btnManageUsers', settingsView: 'btnSettings',
+      purchaseReturnView: 'btnShowPurchaseReturn', salesReturnView: 'btnShowSalesReturn'
     };
+
+    function chartTextColor() { return document.documentElement.getAttribute('data-bs-theme') === 'dark' ? '#cbd5e1' : '#475569'; }
+    function chartGridColor() { return document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'rgba(255,255,255,.08)' : 'rgba(15,23,42,.08)'; }
+
+    const dashboardCharts = {};
+
+    function dashChart(id, config) {
+      if (dashboardCharts[id]) dashboardCharts[id].destroy();
+      dashboardCharts[id] = new Chart(document.getElementById(id).getContext('2d'), config);
+    }
+
+    async function loadDashboard() {
+      if (!['admin', 'bos'].includes(currentUser?.Role)) return;
+      try {
+        const response = await fetch('/api/dashboard');
+        const r = await response.json();
+        if (!r.success) throw new Error(r.message);
+        const now = new Date();
+        const hour = now.getHours();
+        document.getElementById('dashGreeting').textContent = `${hour < 11 ? 'Selamat pagi' : hour < 15 ? 'Selamat siang' : hour < 19 ? 'Selamat sore' : 'Selamat malam'}, ${currentUser.Nmuser}`;
+        document.getElementById('dashDate').textContent = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        const todayTotal = Number(r.today.total), yesterdayTotal = Number(r.yesterday.total);
+        const diff = yesterdayTotal > 0 ? ((todayTotal - yesterdayTotal) / yesterdayTotal * 100) : null;
+        document.getElementById('dashToday').textContent = formatRupiah(todayTotal);
+        document.getElementById('dashTodaySub').textContent = `${r.today.trx} transaksi` + (diff === null ? '' : ` · ${diff >= 0 ? '▲' : '▼'} ${Math.abs(diff).toFixed(1)}% vs kemarin`);
+        document.getElementById('dashMonth').textContent = formatRupiah(r.month.total);
+        document.getElementById('dashMonthSub').textContent = `${r.month.trx} transaksi`;
+        document.getElementById('dashProfit').textContent = formatRupiah(r.month.trx > 0 ? Number(r.month.total) / r.month.trx : 0);
+        document.getElementById('dashProfitSub').textContent = `${formatNumber(r.profit.qty)} item terjual`;
+        document.getElementById('dashReceivable').textContent = formatRupiah(r.receivable);
+        document.getElementById('dashItems').textContent = formatNumber(r.stock.items);
+        document.getElementById('dashStockValue').textContent = formatRupiah(r.stock.value);
+        document.getElementById('dashEmpty').textContent = formatNumber(r.stock.empty);
+        document.getElementById('dashMinus').textContent = formatNumber(r.stock.minus);
+
+        const text = chartTextColor(), grid = chartGridColor();
+        const days = [];
+        for (let i = 13; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); days.push(d.toLocaleDateString('sv-SE')); }
+        const byDay = new Map(r.daily.map(row => [row.tgl, row]));
+        const dailyCanvas = document.getElementById('dashDailyChart');
+        const gradient = dailyCanvas.getContext('2d').createLinearGradient(0, 0, 0, 280);
+        gradient.addColorStop(0, 'rgba(79,124,255,.55)');
+        gradient.addColorStop(1, 'rgba(124,77,255,.02)');
+        dashChart('dashDailyChart', {
+          type: 'line',
+          data: { labels: days.map(d => d.slice(8) + '/' + d.slice(5, 7)), datasets: [
+            { label: 'Penjualan', data: days.map(d => Number(byDay.get(d)?.total || 0)), borderColor: '#4f7cff', backgroundColor: gradient, fill: true, tension: .35, pointRadius: 3, yAxisID: 'y' },
+            { label: 'Transaksi', data: days.map(d => Number(byDay.get(d)?.trx || 0)), type: 'bar', backgroundColor: 'rgba(56,239,125,.55)', borderRadius: 6, yAxisID: 'y1' }
+          ] },
+          options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false }, scales: {
+            x: { ticks: { color: text }, grid: { display: false } },
+            y: { beginAtZero: true, ticks: { color: text, callback: v => formatRupiah(v) }, grid: { color: grid } },
+            y1: { beginAtZero: true, position: 'right', ticks: { color: text, precision: 0 }, grid: { drawOnChartArea: false } }
+          }, plugins: { legend: { position: 'bottom', labels: { color: text } }, tooltip: { callbacks: { label: c => c.dataset.yAxisID === 'y' ? `Penjualan: ${formatRupiah(c.parsed.y)}` : `Transaksi: ${c.parsed.y}` } } } }
+        });
+
+        const palette = ['#4f7cff', '#38ef7d', '#ff9966', '#e052c0', '#06b6d4', '#f2b134'];
+        dashChart('dashGroupChart', {
+          type: 'doughnut',
+          data: { labels: r.byGroup.map(g => g.nama), datasets: [{ data: r.byGroup.map(g => Number(g.total)), backgroundColor: palette, borderWidth: 0 }] },
+          options: { responsive: true, maintainAspectRatio: false, cutout: '62%', plugins: { legend: { position: 'bottom', labels: { color: text } }, tooltip: { callbacks: { label: c => `${c.label}: ${formatRupiah(c.parsed)}` } } } }
+        });
+
+        dashChart('dashTopChart', {
+          type: 'bar',
+          data: { labels: r.topItems.map(i => i.nama), datasets: [{ label: 'Penjualan', data: r.topItems.map(i => Number(i.total)), backgroundColor: palette, borderRadius: 8 }] },
+          options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: {
+            x: { beginAtZero: true, ticks: { color: text, callback: v => formatRupiah(v) }, grid: { color: grid } },
+            y: { ticks: { color: text }, grid: { display: false } }
+          }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => formatRupiah(c.parsed.x) } } } }
+        });
+
+        const low = document.getElementById('dashLowStock');
+        low.replaceChildren();
+        r.lowStock.forEach(item => {
+          const row = low.insertRow();
+          row.insertCell().textContent = `${item.Nmbar} (${item.KdBar})`;
+          const cell = row.insertCell();
+          cell.className = 'text-end fw-bold' + (Number(item.Stok) < 0 ? ' text-negative' : '');
+          cell.textContent = `${formatNumber(item.Stok)} ${item.SatKecil || ''}`;
+        });
+        const recent = document.getElementById('dashRecent');
+        recent.replaceChildren();
+        if (!r.recent.length) recent.insertRow().insertCell().textContent = 'Belum ada transaksi.';
+        r.recent.forEach(item => {
+          const row = recent.insertRow();
+          row.insertCell().textContent = item.nofak;
+          row.insertCell().textContent = item.kdkasir;
+          row.insertCell().textContent = String(item.jam || '').slice(0, 5);
+          const cell = row.insertCell();
+          cell.className = 'text-end';
+          cell.textContent = formatRupiah(item.GTotal);
+        });
+      } catch (err) {
+        console.error('Gagal memuat dashboard:', err);
+      }
+    }
+
+    let stockSort = { by: 'KdBar', dir: 'asc' };
+
+    function sortStock(column) {
+      stockSort = { by: column, dir: stockSort.by === column && stockSort.dir === 'asc' ? 'desc' : 'asc' };
+      updateSortIndicators();
+      currentPage = 1;
+      loadDataBarang();
+    }
+
+    function applySortSelect() {
+      stockSort = { by: document.getElementById('sortField').value, dir: document.getElementById('sortDir').value };
+      updateSortIndicators();
+      currentPage = 1;
+      loadDataBarang();
+    }
+
+    function updateSortIndicators() {
+      const field = document.getElementById('sortField');
+      if (field) { field.value = stockSort.by; document.getElementById('sortDir').value = stockSort.dir; }
+      document.querySelectorAll('#stockView th.sortable').forEach(th => {
+        const active = th.dataset.sort === stockSort.by;
+        th.classList.toggle('sorted', active);
+        th.querySelector('.sort-ind').className = 'sort-ind bi ' + (!active ? 'bi-arrow-down-up' : stockSort.dir === 'asc' ? 'bi-sort-up' : 'bi-sort-down');
+      });
+    }
+
+    function resetStockFilters() {
+      document.querySelectorAll('#stockView [data-filter]').forEach(field => { field.value = ''; });
+      stockSort = { by: 'KdBar', dir: 'asc' };
+      updateSortIndicators();
+      currentPage = 1;
+      loadDataBarang();
+    }
+
+    function toggleTheme() {
+      const next = document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-bs-theme', next);
+      localStorage.setItem('theme', next);
+      updateThemeIcon();
+      if (!document.getElementById('dashboardView').classList.contains('d-none')) loadDashboard();
+      if (!document.getElementById('fullReportView').classList.contains('d-none')) loadFullReport();
+    }
+
+    function updateThemeIcon() {
+      const dark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+      document.getElementById('themeIcon').className = dark ? 'bi bi-sun' : 'bi bi-moon-stars';
+    }
 
     function showView(viewId) {
       Object.keys(sidebarNavButtonByView).forEach(id => {
@@ -754,7 +1033,12 @@
       });
       document.querySelectorAll('#sidebarNav .nav-link').forEach(link => link.classList.remove('active'));
       const activeLink = document.getElementById(sidebarNavButtonByView[viewId]);
-      if (activeLink) activeLink.classList.add('active');
+      if (activeLink) {
+        activeLink.classList.add('active');
+        const title = activeLink.textContent.trim();
+        document.getElementById('pageTitle').textContent = title;
+        document.getElementById('pageCrumb').textContent = title;
+      }
       if (viewId === 'kasirView') document.getElementById('searchProduct').focus();
       if (viewId === 'purchaseView') document.getElementById('purchaseSearch').focus();
       if (viewId === 'opnameView') document.getElementById('opnameSearch').focus();
@@ -1251,7 +1535,26 @@
       finally { button.disabled = false; }
     }
 
+    async function loadReturnHistory() {
+      const body = document.getElementById('returnHistoryBody'); if (!body) return;
+      try {
+        const result = await (await fetch('/api/retur-penjualan/recent')).json();
+        if (!result.success) throw new Error(result.message);
+        body.replaceChildren();
+        result.data.forEach(r => {
+          const tr = body.insertRow();
+          [r.TglFak, r.NoFak, r.SourceNoFak, r.KdKasir].forEach(v => { tr.insertCell().textContent = v ?? '-'; });
+          const t = tr.insertCell(); t.className = 'text-end'; t.textContent = formatRupiah(r.GTotal);
+          const a = tr.insertCell(); a.className = 'text-end';
+          const b = document.createElement('button'); b.type = 'button'; b.className = 'btn btn-sm btn-outline-primary py-0';
+          b.innerHTML = '<i class="bi bi-printer"></i> Nota'; b.addEventListener('click', () => reprintReturn(r.NoFak)); a.appendChild(b);
+        });
+        if (!result.data.length) body.innerHTML = '<tr><td colspan="6" class="text-center text-body-secondary py-3">Belum ada retur.</td></tr>';
+      } catch (err) { body.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-3">Gagal memuat riwayat retur.</td></tr>'; }
+    }
+
     async function loadReturnableSales() {
+      loadReturnHistory();
       const select = document.getElementById('returnSourceSale');
       try {
         const response = await fetch('/api/penjualan/recent');
@@ -1329,6 +1632,7 @@
         const result = await response.json();
         if (!result.success) throw new Error(result.message || 'Gagal menyimpan retur penjualan.');
         alert(`${result.message} Total: ${formatRupiah(result.GTotal)}.`);
+        reprintReturn(result.NoFak); loadReturnHistory();
         await loadSalesReturn(document.getElementById('returnSourceSale').value);
       } catch (err) { alert(err.message); }
       finally { button.disabled = false; }
@@ -1436,277 +1740,412 @@
       }
     }
 
-    async function loadReport() {
+    const reportCharts = {};
+    let lastFullReport = null;
+    const reportTableDefs = {
+      sales: { body: 'rtSales', file: 'penjualan', head: ['Tanggal', 'Jam', 'No. Faktur', 'Kasir', 'Diskon', 'Total', 'Status'], rows: r => r.sales.map(s => [s.tglfak, String(s.jam || '').slice(0, 5), s.nofak, s.kdkasir, Number(s.DiscRp) || 0, Number(s.GTotal) || 0, s.KOND === '1' ? 'Aktif' : 'Batal']) },
+      items: { body: 'rtItems', file: 'barang-terjual', head: ['#', 'Kode', 'Nama Barang', 'Kelompok', 'Terjual', 'Satuan', 'Nilai'], rows: r => r.topItems.map((i, n) => [n + 1, i.kode, i.nama, i.kelompok, Number(i.qty) || 0, i.satuan, Number(i.total) || 0]) },
+      purchases: { body: 'rtPurchases', file: 'pembelian', head: ['Tanggal', 'No. Faktur', 'Supplier', 'Keterangan', 'Total', 'Dibayar'], rows: r => r.purchases.map(p => [p.TglFak, p.NoFak, p.KDSUPP || '-', p.Ket || '-', Number(p.GTotal) || 0, Number(p.Bayar) || 0]) },
+      returns: { body: 'rtReturns', file: 'retur-penjualan', head: ['Tanggal', 'No. Retur', 'Faktur Asal', 'Kasir', 'Total'], rows: r => r.salesReturns.map(x => [x.TglFak, x.NoFak, x.SourceNoFak, x.KdKasir, Number(x.GTotal) || 0]) },
+      cash: { body: 'rtCash', file: 'kas', head: ['Tanggal', 'User', 'Awal', 'Masuk', 'Keluar', 'Batal', 'Saldo'], rows: r => r.cashLedger.map(c => [c.Tgl, c.KdUser, Number(c.Awal) || 0, Number(c.Masuk) || 0, Number(c.Keluar) || 0, Number(c.Batal) || 0, Number(c.Saldo) || 0]) },
+      movements: { body: 'rtMovements', file: 'mutasi-stok', head: ['Tanggal', 'Kode', 'Nama', 'No. Bukti', 'Qty', 'Status', 'Keterangan'], rows: r => r.stockMovements.map(m => [m.Tgl, m.KdBar, m.Nmbar || '-', m.NoBukti, Number(m.Qty) || 0, m.Status, m.Ket || '-']) },
+      low: { body: 'rtLow', file: 'stok-terendah', head: ['Kode', 'Nama Barang', 'Satuan', 'Stok'], rows: r => r.lowStock.map(i => [i.KdBar, i.Nmbar, i.SatKecil, Number(i.Stok) || 0]) }
+    };
+    const moneyColumns = { sales: [4, 5], items: [6], purchases: [4, 5], returns: [4], cash: [2, 3, 4, 5, 6] };
+    const numberColumns = { items: [4], movements: [4], low: [3] };
+
+    function reportColors() {
+      const dark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+      return { text: dark ? '#cbd5e1' : '#475569', grid: dark ? 'rgba(255,255,255,.08)' : 'rgba(15,23,42,.08)' };
+    }
+
+    function reportChart(id, config) {
+      if (reportCharts[id]) reportCharts[id].destroy();
+      const { text, grid } = reportColors();
+      config.options = config.options || {};
+      config.options.responsive = true;
+      config.options.maintainAspectRatio = false;
+      config.options.color = text;
+      const plugins = config.options.plugins = config.options.plugins || {};
+      plugins.legend = plugins.legend || {};
+      plugins.legend.labels = Object.assign({ color: text, boxWidth: 12 }, plugins.legend.labels);
+      Object.values(config.options.scales || {}).forEach(scale => {
+        scale.ticks = Object.assign({ color: text }, scale.ticks);
+        scale.grid = Object.assign({ color: grid }, scale.grid);
+      });
+      reportCharts[id] = new Chart(document.getElementById(id).getContext('2d'), config);
+    }
+
+    function shortRupiah(value) {
+      const n = Math.abs(value);
+      if (n >= 1e9) return (value / 1e9).toFixed(1).replace('.0', '') + ' M';
+      if (n >= 1e6) return (value / 1e6).toFixed(1).replace('.0', '') + ' jt';
+      if (n >= 1e3) return (value / 1e3).toFixed(0) + ' rb';
+      return String(value);
+    }
+
+    function setReportRange(kind) {
+      const now = new Date();
+      const iso = d => d.toLocaleDateString('sv-SE');
+      const start = new Date(now);
+      if (kind === 'week') start.setDate(now.getDate() - 6);
+      if (kind === 'month') start.setDate(1);
+      if (kind === 'year') { start.setMonth(0); start.setDate(1); }
+      document.getElementById('reportFrom').value = iso(start);
+      document.getElementById('reportTo').value = iso(now);
+      loadFullReport();
+    }
+
+    function showReportTab(tab) {
+      document.querySelectorAll('#reportTabs .nav-link').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+      document.querySelectorAll('#fullReportView .report-pane').forEach(p => p.classList.toggle('d-none', p.dataset.pane !== tab));
+      Object.values(reportCharts).forEach(c => c.resize());
+    }
+
+    function reportCard(icon, color, label, value, sub) {
+      return `<div class="col-6 col-lg-4 col-xxl"><div class="card shadow-sm h-100"><div class="card-body d-flex align-items-center gap-3 py-3">
+        <div class="rc-icon bg-${color}-subtle text-${color}-emphasis"><i class="bi ${icon}"></i></div>
+        <div class="min-w-0"><div class="small text-body-secondary">${label}</div><div class="fw-bold rc-value">${value}</div><div class="small text-body-secondary">${sub}</div></div></div></div></div>`;
+    }
+
+    function renderReportTable(name, filter = '') {
+      const def = reportTableDefs[name];
+      const body = document.getElementById(def.body);
+      const needle = filter.trim().toLowerCase();
+      const rows = def.rows(lastFullReport).filter(row => !needle || row.some(v => String(v).toLowerCase().includes(needle)));
+      const money = moneyColumns[name] || [], numbers = numberColumns[name] || [];
+      body.replaceChildren();
+      rows.forEach((row, index) => {
+        const tr = body.insertRow();
+        row.forEach((value, col) => {
+          const td = tr.insertCell();
+          if (money.includes(col)) { td.className = 'text-end'; td.textContent = formatRupiah(value); }
+          else if (numbers.includes(col)) { td.className = 'text-end' + (value < 0 ? ' text-negative' : ''); td.textContent = formatNumber(value); }
+          else td.textContent = value ?? '-';
+        });
+        if (name === 'sales') {
+          const sale = lastFullReport.sales.find(s => s.nofak === row[2] && s.tglfak === row[0]);
+          const td = tr.insertCell(); td.className = 'text-end';
+          if (sale && sale.KOND === '1') {
+            const b = document.createElement('button'); b.type = 'button'; b.className = 'btn btn-sm btn-outline-danger py-0'; b.textContent = 'Batal';
+            b.addEventListener('click', () => cancelSale(sale)); td.appendChild(b);
+          } else tr.classList.add('text-body-secondary');
+        }
+      });
+      if (!rows.length) {
+        const td = body.insertRow().insertCell();
+        td.colSpan = def.head.length + (name === 'sales' ? 1 : 0); td.className = 'text-center text-body-secondary py-3'; td.textContent = 'Tidak ada data pada filter ini.';
+      }
+    }
+
+    function exportReportCsv(name) {
+      if (!lastFullReport) return alert('Tampilkan laporan terlebih dahulu.');
+      const def = reportTableDefs[name];
+      const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+      const csv = [def.head, ...def.rows(lastFullReport)].map(r => r.map(esc).join(',')).join('\r\n');
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }));
+      link.download = `laporan-${def.file}-${lastFullReport.from}-${lastFullReport.to}.csv`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }
+
+    async function loadFullReport() {
       const from = document.getElementById('reportFrom').value;
       const to = document.getElementById('reportTo').value;
+      const params = new URLSearchParams({ from, to, kasir: document.getElementById('reportCashier').value, kdKel: document.getElementById('reportGroup').value });
       try {
-        const response = await fetch(`/api/laporan?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
-        const result = await response.json();
-        if (!result.success) throw new Error(result.message || 'Gagal memuat laporan.');
-        document.getElementById('reportSalesTotal').textContent = formatRupiah(result.salesSummary.total);
-        document.getElementById('reportSalesCount').textContent = `${result.salesSummary.transactions} transaksi`;
-        document.getElementById('reportPurchaseTotal').textContent = formatRupiah(result.purchaseSummary.total);
-        document.getElementById('reportPurchaseCount').textContent = `${result.purchaseSummary.transactions} transaksi`;
-        document.getElementById('reportReturnTotal').textContent = formatRupiah(result.purchaseReturnSummary.total);
-        document.getElementById('reportReturnCount').textContent = `${result.purchaseReturnSummary.transactions} retur`;
-        document.getElementById('reportSalesReturnTotal').textContent = formatRupiah(result.salesReturnSummary.total);
-        document.getElementById('reportSalesReturnCount').textContent = `${result.salesReturnSummary.transactions} retur`;
-        const cashIn = result.cashLedger.reduce((total, entry) => total + Number(entry.Masuk || 0), 0);
-        const cashOut = result.cashLedger.reduce((total, entry) => total + Number(entry.Keluar || 0), 0);
-        document.getElementById('reportCashSummary').textContent = `${formatRupiah(cashIn)} / ${formatRupiah(cashOut)}`;
-        renderSalesReportRows(result.sales);
-        renderCashierSalesReport(result.salesByCashier || []);
-        renderReportRows('reportPurchasesBody', result.purchases, ['TglFak', 'NoFak', 'Ket', 'GTotal', 'Bayar'], [3, 4]);
-        renderReportRows('reportCashBody', result.cashLedger, ['Tgl', 'KdUser', 'Awal', 'Masuk', 'Keluar', 'Saldo'], [2, 3, 4, 5]);
-        renderReportRows('reportStockBody', result.stockMovements, ['Tgl', 'KdBar', 'Nmbar', 'NoBukti', 'Qty', 'Status', 'Ket'], [], [4]);
+        const response = await fetch('/api/laporan-lengkap?' + params);
+        const r = await response.json();
+        if (!r.success) throw new Error(r.message || 'Gagal memuat laporan.');
+        lastFullReport = r;
+
+        const cashierSelect = document.getElementById('reportCashier'), groupSelect = document.getElementById('reportGroup');
+        if (cashierSelect.options.length === 1) r.cashiers.forEach(c => cashierSelect.add(new Option(c.Nmuser || c.KdUser, c.KdUser)));
+        if (groupSelect.options.length === 1) r.groups.forEach(g => groupSelect.add(new Option(g.NMKEL || g.KDKEL, g.KDKEL)));
+
+        const s = r.summary, sales = Number(s.sales.total), purchase = Number(s.purchase.total);
+        const salesReturn = Number(s.salesReturn.total), purchaseReturn = Number(s.purchaseReturn.total);
+        const net = sales - salesReturn - purchase + purchaseReturn;
+        const avg = s.sales.trx ? sales / s.sales.trx : 0;
+        document.getElementById('reportCards').innerHTML =
+          reportCard('bi-cart-check', 'primary', 'Penjualan', formatRupiah(sales), `${formatNumber(s.sales.trx)} transaksi`) +
+          reportCard('bi-calculator', 'info', 'Rata-rata / Transaksi', formatRupiah(avg), `Diskon ${formatRupiah(s.sales.discount)}`) +
+          reportCard('bi-truck', 'warning', 'Pembelian', formatRupiah(purchase), `${formatNumber(s.purchase.trx)} faktur`) +
+          reportCard('bi-arrow-return-left', 'danger', 'Retur Jual / Beli', `${formatRupiah(salesReturn)}`, `Retur beli ${formatRupiah(purchaseReturn)}`) +
+          reportCard('bi-x-octagon', 'secondary', 'Transaksi Batal', formatNumber(s.canceled.trx), formatRupiah(s.canceled.total)) +
+          reportCard('bi-wallet2', net >= 0 ? 'success' : 'danger', 'Arus Bersih', formatRupiah(net), 'Jual - beli - retur');
+
+        const days = []; 
+        for (let d = new Date(from + 'T00:00:00'); d <= new Date(to + 'T00:00:00') && days.length < 400; d.setDate(d.getDate() + 1)) days.push(d.toLocaleDateString('sv-SE'));
+        const salesByDay = new Map(r.daily.map(x => [x.tgl, Number(x.total)])), buyByDay = new Map(r.purchaseDaily.map(x => [x.tgl, Number(x.total)]));
+        const moneyAxis = { beginAtZero: true, ticks: { callback: v => shortRupiah(v) } };
+        const moneyTip = { callbacks: { label: c => `${c.dataset.label || c.label}: ${formatRupiah(c.raw)}` } };
+        reportChart('rcDaily', { type: 'bar', data: { labels: days.map(d => d.slice(8) + '/' + d.slice(5, 7)), datasets: [
+          { label: 'Penjualan', data: days.map(d => salesByDay.get(d) || 0), backgroundColor: 'rgba(79,124,255,.8)', borderRadius: 4 },
+          { label: 'Pembelian', data: days.map(d => buyByDay.get(d) || 0), backgroundColor: 'rgba(245,158,11,.8)', borderRadius: 4 }] },
+          options: { scales: { x: { ticks: { maxRotation: 0, autoSkip: true } }, y: moneyAxis }, plugins: { tooltip: moneyTip } } });
+        reportChart('rcFlow', { type: 'bar', data: { labels: ['Jual', 'Retur jual', 'Beli', 'Retur beli', 'Bersih'], datasets: [{
+          data: [sales, -salesReturn, -purchase, purchaseReturn, net],
+          backgroundColor: ['#22c55e', '#ef4444', '#f59e0b', '#06b6d4', net >= 0 ? '#4f7cff' : '#ef4444'], borderRadius: 4 }] },
+          options: { scales: { y: moneyAxis }, plugins: { legend: { display: false }, tooltip: moneyTip } } });
+        const hours = Array.from({ length: 24 }, (_, i) => i), hourMap = new Map(r.hourly.map(x => [Number(x.jam), x]));
+        reportChart('rcHourly', { data: { labels: hours.map(h => String(h).padStart(2, '0')), datasets: [
+          { type: 'bar', label: 'Penjualan', data: hours.map(h => Number(hourMap.get(h)?.total || 0)), backgroundColor: 'rgba(124,77,255,.75)', borderRadius: 4, yAxisID: 'y' },
+          { type: 'line', label: 'Transaksi', data: hours.map(h => Number(hourMap.get(h)?.trx || 0)), borderColor: '#f59e0b', backgroundColor: '#f59e0b', tension: .35, yAxisID: 'y1' }] },
+          options: { scales: { y: moneyAxis, y1: { position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }, ticks: { precision: 0 } } }, plugins: { tooltip: { callbacks: { label: c => c.dataset.yAxisID === 'y' ? `Penjualan: ${formatRupiah(c.raw)}` : `Transaksi: ${c.raw}` } } } } });
+        const palette = ['#4f7cff', '#22c55e', '#f59e0b', '#ef4444', '#a855f7', '#06b6d4', '#ec4899', '#84cc16'];
+        const donut = (id, rows) => reportChart(id, { type: 'doughnut', data: { labels: rows.map(x => x.nama), datasets: [{ data: rows.map(x => Number(x.total)), backgroundColor: palette, borderWidth: 0 }] },
+          options: { cutout: '62%', plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: c => `${c.label}: ${formatRupiah(c.raw)}` } } } } });
+        donut('rcCashier', r.byCashier);
+        const groups = r.byGroup.slice(0, 7), rest = r.byGroup.slice(7).reduce((a, x) => a + Number(x.total), 0);
+        donut('rcGroup', rest ? [...groups, { nama: 'Lainnya', total: rest }] : groups);
+        const top = r.topItems.slice(0, 10);
+        reportChart('rcTop', { type: 'bar', data: { labels: top.map(x => x.nama), datasets: [{ label: 'Nilai', data: top.map(x => Number(x.total)), backgroundColor: 'rgba(34,197,94,.8)', borderRadius: 4 }] },
+          options: { indexAxis: 'y', scales: { x: moneyAxis }, plugins: { legend: { display: false }, tooltip: moneyTip } } });
+        reportChart('rcSupplier', { type: 'bar', data: { labels: r.bySupplier.map(x => x.nama), datasets: [{ label: 'Pembelian', data: r.bySupplier.map(x => Number(x.total)), backgroundColor: 'rgba(245,158,11,.85)', borderRadius: 4 }] },
+          options: { indexAxis: 'y', scales: { x: moneyAxis }, plugins: { legend: { display: false }, tooltip: moneyTip } } });
+        const st = r.stockStatus;
+        reportChart('rcStock', { type: 'doughnut', data: { labels: ['Tersedia', 'Kosong', 'Minus'], datasets: [{ data: [st.ok, st.empty, st.minus].map(Number), backgroundColor: ['#22c55e', '#f59e0b', '#ef4444'], borderWidth: 0 }] },
+          options: { cutout: '62%', plugins: { legend: { position: 'bottom' } } } });
+        document.getElementById('rcStockValue').textContent = `${formatNumber(st.items)} barang · nilai persediaan ${formatRupiah(st.value)}`;
+
+        Object.keys(reportTableDefs).forEach(name => {
+          const search = document.querySelector(`.report-search[data-table="${name}"]`);
+          renderReportTable(name, search ? search.value : '');
+        });
       } catch (err) {
         alert(err.message);
       }
     }
 
-    function renderReportRows(elementId, rows, fields, moneyIndexes = [fields.length - 1], numberIndexes = []) {
-      const body = document.getElementById(elementId);
-      body.replaceChildren();
-      rows.forEach(item => {
-        const row = body.insertRow();
-        fields.forEach((field, index) => {
-          const cell = row.insertCell();
-          if (moneyIndexes.includes(index)) cell.className = 'text-end';
-          cell.textContent = moneyIndexes.includes(index) ? formatRupiah(item[field]) :
-            numberIndexes.includes(index) ? formatNumber(item[field]) : (item[field] ?? '-');
-        });
-      });
-      if (!rows.length) {
-        const row = body.insertRow();
-        const cell = row.insertCell(); cell.colSpan = fields.length;
-        cell.className = 'text-center text-muted py-3'; cell.textContent = 'Tidak ada transaksi pada rentang ini.';
-      }
+    document.addEventListener('input', event => {
+      const input = event.target.closest?.('.report-search');
+      if (input && lastFullReport) renderReportTable(input.dataset.table, input.value);
+    });
+    document.addEventListener('click', event => {
+      const tab = event.target.closest?.('#reportTabs .nav-link');
+      if (tab) showReportTab(tab.dataset.tab);
+    });
+    const srCharts = {};
+    function srChart(id, config) {
+      if (srCharts[id]) srCharts[id].destroy();
+      const { text, grid } = reportColors();
+      config.options = config.options || {};
+      config.options.responsive = true; config.options.maintainAspectRatio = false; config.options.color = text;
+      const plugins = config.options.plugins = config.options.plugins || {};
+      plugins.legend = plugins.legend || {};
+      plugins.legend.labels = Object.assign({ color: text, boxWidth: 12 }, plugins.legend.labels);
+      Object.values(config.options.scales || {}).forEach(sc => { sc.ticks = Object.assign({ color: text }, sc.ticks); sc.grid = Object.assign({ color: grid }, sc.grid); });
+      srCharts[id] = new Chart(document.getElementById(id).getContext('2d'), config);
     }
 
-    function renderSalesReportRows(rows) {
-      const body = document.getElementById('reportSalesBody');
-      body.replaceChildren();
-      rows.forEach(sale => {
-        const row = body.insertRow();
-        [sale.tglfak, sale.nofak, sale.kdkasir, sale.KOND === '1' ? 'Aktif' : 'Batal'].forEach(value => {
-          row.insertCell().textContent = value ?? '-';
-        });
-        const total = row.insertCell(); total.className = 'text-end'; total.textContent = formatRupiah(sale.GTotal);
-        const action = row.insertCell(); action.className = 'text-end';
-        if (sale.KOND === '1') {
-          const button = document.createElement('button');
-          button.type = 'button'; button.className = 'btn btn-sm btn-outline-danger'; button.textContent = 'Batal';
-          button.addEventListener('click', () => cancelSale(sale)); action.appendChild(button);
-        }
-      });
-      if (!rows.length) {
-        const row = body.insertRow(); const cell = row.insertCell();
-        cell.colSpan = 6; cell.className = 'text-center text-muted py-3'; cell.textContent = 'Tidak ada transaksi pada rentang ini.';
-      }
+    function setSalesRange(kind) {
+      const now = new Date(), start = new Date(now);
+      if (kind === 'week') start.setDate(now.getDate() - 6);
+      if (kind === 'month') start.setDate(1);
+      document.getElementById('cashierReportFrom').value = start.toLocaleDateString('sv-SE');
+      document.getElementById('cashierReportTo').value = now.toLocaleDateString('sv-SE');
+      loadCashierReport();
     }
 
-    function renderCashierSalesReport(rows) {
-      const body = document.getElementById('reportCashierBody');
+    function showSalesTab(tab) {
+      document.querySelectorAll('#srTabs .nav-link').forEach(b => b.classList.toggle('active', b.dataset.srtab === tab));
+      document.querySelectorAll('#cashierReportView [data-srpane]').forEach(p => p.classList.toggle('d-none', p.dataset.srpane !== tab));
+      Object.values(srCharts).forEach(c => c.resize());
+    }
+
+    function signedRupiah(value) {
+      const n = Number(value) || 0;
+      const cls = n < 0 ? 'text-negative' : n > 0 ? 'text-success' : '';
+      return `<span class="${cls} fw-semibold">${n > 0 ? '+' : ''}${formatRupiah(n)}</span>`;
+    }
+
+    function isManagerUser() { return currentUser && ['admin', 'bos'].includes(currentUser.Role); }
+
+    function renderSalesTables() {
+      const r = lastCashierReport; if (!r) return;
+      const q1 = document.getElementById('srSalesSearch').value.trim().toLowerCase();
+      const body = document.getElementById('cashierReportBody');
       body.replaceChildren();
-      rows.forEach(row => {
+      const sales = r.sales.filter(s => !q1 || `${s.nofak} ${s.kdkasir} ${s.tglfak}`.toLowerCase().includes(q1));
+      sales.forEach(sale => {
         const tr = body.insertRow();
-        tr.insertCell().textContent = row.Tgl;
-        tr.insertCell().textContent = row.Nmuser;
-        const txCell = tr.insertCell(); txCell.className = 'text-end'; txCell.textContent = formatNumber(row.Transactions);
-        const totalCell = tr.insertCell(); totalCell.className = 'text-end fw-semibold'; totalCell.textContent = formatRupiah(row.Total);
+        const active = sale.KOND === '1';
+        [sale.tglfak, String(sale.jam || '').slice(0, 5), sale.nofak, sale.kdkasir].forEach(v => { tr.insertCell().textContent = v ?? '-'; });
+        const disc = tr.insertCell(); disc.className = 'text-end'; disc.textContent = formatRupiah(sale.DiscRp);
+        const tot = tr.insertCell(); tot.className = 'text-end fw-semibold'; tot.textContent = formatRupiah(sale.GTotal);
+        const st = tr.insertCell(); st.innerHTML = `<span class="badge ${active ? 'text-bg-success' : 'text-bg-secondary'}">${active ? 'Aktif' : 'Batal'}</span>`;
+        const act = tr.insertCell(); act.className = 'text-end text-nowrap';
+        const pb = document.createElement('button'); pb.type = 'button'; pb.className = 'btn btn-sm btn-outline-primary py-0 me-1'; pb.innerHTML = '<i class="bi bi-printer"></i> Nota';
+        pb.addEventListener('click', () => reprintSale(sale)); act.appendChild(pb);
+        if (active) {
+          const b = document.createElement('button'); b.type = 'button'; b.className = 'btn btn-sm btn-outline-danger py-0'; b.textContent = 'Batal';
+          b.addEventListener('click', () => cancelSale(sale)); act.appendChild(b);
+        } else tr.classList.add('text-body-secondary');
       });
-      if (!rows.length) {
-        const row = body.insertRow(); const cell = row.insertCell();
-        cell.colSpan = 4; cell.className = 'text-center text-muted py-3'; cell.textContent = 'Tidak ada penjualan pada rentang ini.';
-      }
+      if (!sales.length) body.innerHTML = '<tr><td colspan="8" class="text-center text-body-secondary py-3">Tidak ada transaksi pada filter ini.</td></tr>';
 
-      const dates = [...new Set(rows.map(row => row.Tgl))].sort();
-      const cashiers = [...new Set(rows.map(row => row.Nmuser))];
-      const palette = ['#4dc9a8', '#f2b134', '#e6553a', '#5b8def', '#b660cd', '#5ad1e6', '#f2814f'];
-      const datasets = cashiers.map((name, index) => ({
-        label: name,
-        backgroundColor: palette[index % palette.length],
-        data: dates.map(date => {
-          const match = rows.find(row => row.Tgl === date && row.Nmuser === name);
-          return match ? Number(match.Total) : 0;
-        })
-      }));
-
-      if (cashierSalesChart) cashierSalesChart.destroy();
-      if (typeof Chart === 'undefined' || !dates.length) return;
-      cashierSalesChart = new Chart(document.getElementById('cashierSalesChart').getContext('2d'), {
-        type: 'bar',
-        data: { labels: dates, datasets },
-        options: {
-          responsive: true,
-          scales: {
-            x: { ticks: { color: '#c9d6d1' }, grid: { color: '#2a3835' } },
-            y: { beginAtZero: true, ticks: { color: '#c9d6d1', callback: value => formatRupiah(value) }, grid: { color: '#2a3835' } }
-          },
-          plugins: {
-            legend: { position: 'bottom', labels: { color: '#e7efec' } },
-            tooltip: { callbacks: { label: context => `${context.dataset.label}: ${formatRupiah(context.raw)}` } }
-          }
-        }
+      const q2 = document.getElementById('srItemsSearch').value.trim().toLowerCase();
+      const ib = document.getElementById('srItemsBody');
+      ib.replaceChildren();
+      const items = r.items.filter(i => !q2 || `${i.Kode} ${i.Nama}`.toLowerCase().includes(q2));
+      items.forEach((i, n) => {
+        const tr = ib.insertRow();
+        [n + 1, i.Kode, i.Nama].forEach(v => { tr.insertCell().textContent = v; });
+        const qty = tr.insertCell(); qty.className = 'text-end'; qty.textContent = formatNumber(i.Qty);
+        tr.insertCell().textContent = i.Satuan || '-';
+        const tot = tr.insertCell(); tot.className = 'text-end'; tot.textContent = formatRupiah(i.Total);
       });
+      if (!items.length) ib.innerHTML = '<tr><td colspan="6" class="text-center text-body-secondary py-3">Tidak ada data.</td></tr>';
+    }
+
+    function exportSalesCsv(kind) {
+      const r = lastCashierReport; if (!r) return alert('Tampilkan laporan terlebih dahulu.');
+      const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+      const rows = kind === 'sales'
+        ? [['Tanggal', 'Jam', 'No. Faktur', 'Kasir', 'Diskon', 'Total', 'Status'], ...r.sales.map(s => [s.tglfak, String(s.jam || '').slice(0, 5), s.nofak, s.kdkasir, s.DiscRp, s.GTotal, s.KOND === '1' ? 'Aktif' : 'Batal'])]
+        : [['Kode', 'Nama Barang', 'Terjual', 'Satuan', 'Nilai'], ...r.items.map(i => [i.Kode, i.Nama, i.Qty, i.Satuan, i.Total])];
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(new Blob(['\ufeff' + rows.map(x => x.map(esc).join(',')).join('\r\n')], { type: 'text/csv;charset=utf-8' }));
+      link.download = `penjualan-${kind}-${r.from}-${r.to}.csv`;
+      link.click(); URL.revokeObjectURL(link.href);
     }
 
     async function loadCashierReport() {
       const from = document.getElementById('cashierReportFrom').value;
       const to = document.getElementById('cashierReportTo').value;
+      if (!from || !to) return setSalesRange('today');
+      const manager = isManagerUser();
+      const cashierSelect = document.getElementById('srCashier');
+      document.getElementById('srCashierWrap').classList.toggle('d-none', !manager);
+      document.getElementById('srCashierChartWrap').classList.toggle('d-none', !manager);
       try {
-        const response = await fetch(`/api/laporan-kasir?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
-        const result = await response.json();
-        if (!result.success) throw new Error(result.message || 'Gagal memuat laporan.');
-        lastCashierReport = result;
-        const total = Number(result.summary.total) || 0;
-        const transactions = Number(result.summary.transactions) || 0;
-        document.getElementById('cashierReportTotal').textContent = formatRupiah(total);
-        document.getElementById('cashierReportCount').textContent = `${transactions} transaksi`;
-        document.getElementById('cashierReportAverage').textContent = formatRupiah(transactions ? total / transactions : 0);
-        renderCashierHourlyChart(result.hourly);
-        const body = document.getElementById('cashierReportBody');
-        body.replaceChildren();
-        result.sales.forEach(sale => {
-          const row = body.insertRow();
-          row.insertCell().textContent = sale.tglfak;
-          row.insertCell().textContent = String(sale.jam).slice(0, 5);
-          row.insertCell().textContent = sale.nofak;
-          row.insertCell().textContent = sale.kdkasir;
-          const totalCell = row.insertCell(); totalCell.className = 'text-end fw-semibold'; totalCell.textContent = formatRupiah(sale.GTotal);
-        });
-        if (!result.sales.length) {
-          const row = body.insertRow(); const cell = row.insertCell();
-          cell.colSpan = 5; cell.className = 'text-center text-muted py-3'; cell.textContent = 'Tidak ada transaksi pada rentang ini.';
-        }
+        const params = new URLSearchParams({ from, to, kasir: manager ? cashierSelect.value : '' });
+        const [response, settleResponse] = await Promise.all([
+          fetch('/api/laporan-kasir?' + params),
+          fetch(manager ? '/api/setoran?' + params : '/api/setoran/saya?' + params)
+        ]);
+        const r = await response.json();
+        const settle = await settleResponse.json();
+        if (!r.success) throw new Error(r.message || 'Gagal memuat laporan.');
+        if (!settle.success) throw new Error(settle.message || 'Gagal memuat setoran.');
+        lastCashierReport = r;
+        if (manager && cashierSelect.options.length === 1) r.users.forEach(u => cashierSelect.add(new Option(u.Nmuser || u.KdUser, u.KdUser)));
+
+        const total = Number(r.summary.total) || 0, trx = Number(r.summary.transactions) || 0;
+        const rows = settle.data;
+        const system = rows.reduce((a, x) => a + x.Sistem, 0);
+        const recorded = rows.filter(x => x.Tercatat);
+        const real = recorded.reduce((a, x) => a + x.Uang, 0), diff = recorded.reduce((a, x) => a + x.Selisih, 0);
+        document.getElementById('srCards').innerHTML =
+          reportCard('bi-cart-check', 'primary', 'Penjualan', formatRupiah(total), `${formatNumber(trx)} transaksi`) +
+          reportCard('bi-calculator', 'info', 'Rata-rata / Transaksi', formatRupiah(trx ? total / trx : 0), `Diskon ${formatRupiah(r.summary.discount)}`) +
+          reportCard('bi-x-octagon', 'secondary', 'Transaksi Batal', formatNumber(r.canceled.transactions), formatRupiah(r.canceled.total)) +
+          reportCard('bi-cash', 'warning', 'Uang Sistem', formatRupiah(system), 'Kas seharusnya') +
+          reportCard('bi-wallet2', 'success', 'Uang Real Dilapor', formatRupiah(real), `${recorded.length} dari ${rows.length} hari`) +
+          reportCard(diff < 0 ? 'bi-arrow-down-circle' : 'bi-arrow-up-circle', diff < 0 ? 'danger' : 'success', 'Selisih Periode', (diff > 0 ? '+' : '') + formatRupiah(diff), `${rows.length - recorded.length} belum dilapor`);
+
+        const moneyAxis = { beginAtZero: true, ticks: { callback: v => shortRupiah(v) } };
+        const tip = { callbacks: { label: c => c.dataset.yAxisID === 'y1' ? `Transaksi: ${c.raw}` : `${c.dataset.label || c.label}: ${formatRupiah(c.raw)}` } };
+        const days = []; 
+        for (let d = new Date(from + 'T00:00:00'); d <= new Date(to + 'T00:00:00') && days.length < 400; d.setDate(d.getDate() + 1)) days.push(d.toLocaleDateString('sv-SE'));
+        const dm = new Map(r.daily.map(x => [x.Tgl, x]));
+        srChart('srDaily', { data: { labels: days.map(d => d.slice(8) + '/' + d.slice(5, 7)), datasets: [
+          { type: 'bar', label: 'Penjualan', data: days.map(d => Number(dm.get(d)?.Total || 0)), backgroundColor: 'rgba(79,124,255,.8)', borderRadius: 4, yAxisID: 'y' },
+          { type: 'line', label: 'Transaksi', data: days.map(d => Number(dm.get(d)?.Transactions || 0)), borderColor: '#f59e0b', backgroundColor: '#f59e0b', tension: .3, yAxisID: 'y1' }] },
+          options: { scales: { y: moneyAxis, y1: { position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }, ticks: { precision: 0 } } }, plugins: { tooltip: tip } } });
+        const hours = Array.from({ length: 24 }, (_, i) => i), hm = new Map(r.hourly.map(x => [Number(x.Jam), x]));
+        srChart('cashierHourlyChart', { data: { labels: hours.map(h => String(h).padStart(2, '0')), datasets: [
+          { type: 'bar', label: 'Penjualan', data: hours.map(h => Number(hm.get(h)?.Total || 0)), backgroundColor: 'rgba(124,77,255,.75)', borderRadius: 4, yAxisID: 'y' },
+          { type: 'line', label: 'Transaksi', data: hours.map(h => Number(hm.get(h)?.Transactions || 0)), borderColor: '#f59e0b', backgroundColor: '#f59e0b', tension: .3, yAxisID: 'y1' }] },
+          options: { scales: { y: moneyAxis, y1: { position: 'right', beginAtZero: true, grid: { drawOnChartArea: false }, ticks: { precision: 0 } } }, plugins: { tooltip: tip } } });
+        const palette = ['#4f7cff', '#22c55e', '#f59e0b', '#ef4444', '#a855f7', '#06b6d4', '#ec4899', '#84cc16'];
+        if (manager) srChart('srCashierChart', { type: 'doughnut', data: { labels: r.byCashier.map(x => x.Nama), datasets: [{ data: r.byCashier.map(x => Number(x.Total)), backgroundColor: palette, borderWidth: 0 }] },
+          options: { cutout: '62%', plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: c => `${c.label}: ${formatRupiah(c.raw)}` } } } } });
+        const top = r.items.slice(0, 10);
+        srChart('srTop', { type: 'bar', data: { labels: top.map(x => x.Nama), datasets: [{ label: 'Nilai', data: top.map(x => Number(x.Total)), backgroundColor: 'rgba(34,197,94,.8)', borderRadius: 4 }] },
+          options: { indexAxis: 'y', scales: { x: moneyAxis }, plugins: { legend: { display: false }, tooltip: tip } } });
+
+        renderSalesTables();
+        renderSettlements(settle, manager);
       } catch (err) {
         alert(err.message);
       }
     }
 
-    function renderCashierHourlyChart(hourly) {
-      if (cashierHourlyChart) cashierHourlyChart.destroy();
-      if (typeof Chart === 'undefined') return;
-      const hours = Array.from({ length: 24 }, (_, hour) => hour);
-      const totalByHour = new Map(hourly.map(row => [Number(row.Jam), Number(row.Total)]));
-      const countByHour = new Map(hourly.map(row => [Number(row.Jam), Number(row.Transactions)]));
-      cashierHourlyChart = new Chart(document.getElementById('cashierHourlyChart').getContext('2d'), {
-        type: 'bar',
-        data: {
-          labels: hours.map(hour => `${String(hour).padStart(2, '0')}:00`),
-          datasets: [
-            { label: 'Total Penjualan', backgroundColor: '#4dc9a8', data: hours.map(hour => totalByHour.get(hour) || 0), yAxisID: 'y' },
-            { label: 'Jumlah Transaksi', type: 'line', borderColor: '#f2b134', backgroundColor: '#f2b134', data: hours.map(hour => countByHour.get(hour) || 0), yAxisID: 'y1', tension: 0.3 }
-          ]
-        },
-        options: {
-          responsive: true,
-          scales: {
-            x: { ticks: { color: '#c9d6d1' }, grid: { color: '#2a3835' } },
-            y: { beginAtZero: true, position: 'left', ticks: { color: '#c9d6d1', callback: value => formatRupiah(value) }, grid: { color: '#2a3835' } },
-            y1: { beginAtZero: true, position: 'right', ticks: { color: '#c9d6d1', stepSize: 1 }, grid: { drawOnChartArea: false } }
-          },
-          plugins: {
-            legend: { position: 'bottom', labels: { color: '#e7efec' } },
-            tooltip: { callbacks: { label: context => context.dataset.yAxisID === 'y' ? `${context.dataset.label}: ${formatRupiah(context.raw)}` : `${context.dataset.label}: ${context.raw}` } }
-          }
-        }
+    function renderSettlements(settle, manager) {
+      document.getElementById('srCashHint').textContent = manager
+        ? 'Isi uang real yang diterima dari tiap kasir. Selisih = uang real - uang sistem; minus (merah) berarti kurang, plus (hijau) berarti lebih.'
+        : 'Hitung uang di laci lalu isi Uang Real pada baris tanggalnya. Kamu hanya bisa melapor untuk hari ini atau kemarin; selisih tercatat dan terakumulasi.';
+      const totals = manager ? settle.totals : (settle.total.Hari ? [{ Nmuser: 'Saya', ...settle.total }] : []);
+      document.getElementById('cashTotalsBody').innerHTML = totals.length ? totals.map(t =>
+        `<tr><td class="fw-semibold">${escapeHtml(t.Nmuser)}</td><td class="text-end">${formatNumber(t.Hari)}</td><td class="text-end">${signedRupiah(t.Minus)}</td><td class="text-end">${signedRupiah(t.Plus)}</td><td class="text-end">${signedRupiah(t.Total)}</td></tr>`).join('')
+        : '<tr><td colspan="5" class="text-center text-body-secondary py-3">Belum ada setoran yang dilapor.</td></tr>';
+
+      const body = document.getElementById('cashBody');
+      body.replaceChildren();
+      settle.data.forEach(item => {
+        const tr = body.insertRow();
+        tr.innerHTML = `<td></td><td></td><td class="text-end"></td><td class="text-end"></td><td class="text-end"></td>
+          <td><input type="number" min="0" step="1" class="form-control form-control-sm" placeholder="Uang real"></td>
+          <td class="text-end"></td><td><input type="text" maxlength="100" class="form-control form-control-sm" placeholder="Catatan"></td>
+          <td class="text-nowrap"><button type="button" class="btn btn-sm btn-primary" title="Simpan"><i class="bi bi-check-lg"></i></button> <button type="button" class="btn btn-sm btn-outline-danger d-none" title="Hapus catatan"><i class="bi bi-x-lg"></i></button></td>`;
+        const c = tr.cells;
+        c[0].textContent = item.Tgl; c[1].textContent = item.Nmuser || item.KdUser; c[2].textContent = formatNumber(item.Trx);
+        c[3].textContent = formatRupiah(item.Penjualan); c[4].textContent = formatRupiah(item.Sistem);
+        const real = c[5].firstChild, note = c[7].firstChild, save = c[8].children[0], clear = c[8].children[1];
+        if (item.Tercatat) { real.value = item.Uang; note.value = item.Ket || ''; c[6].innerHTML = signedRupiah(item.Selisih); if (manager) clear.classList.remove('d-none'); }
+        else c[6].innerHTML = '<span class="text-body-secondary">-</span>';
+        real.addEventListener('input', () => { if (real.value !== '') c[6].innerHTML = signedRupiah(Number(real.value) - item.Sistem); });
+        save.addEventListener('click', async () => {
+          if (real.value === '') return alert('Isi uang real terlebih dahulu.');
+          try {
+            const res = await fetch(manager ? '/api/setoran' : '/api/setoran/saya', { method: 'PUT', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ Tgl: item.Tgl, KdUser: item.KdUser, Uang: Number(real.value), Ket: note.value }) });
+            const out = await res.json();
+            if (!out.success) throw new Error(out.message);
+            loadCashierReport();
+          } catch (err) { alert(err.message); }
+        });
+        clear.addEventListener('click', async () => {
+          if (!confirm('Hapus catatan setoran ini?')) return;
+          await fetch('/api/setoran?' + new URLSearchParams({ Tgl: item.Tgl, KdUser: item.KdUser }), { method: 'DELETE' });
+          loadCashierReport();
+        });
       });
+      if (!settle.data.length) body.innerHTML = '<tr><td colspan="9" class="text-center text-body-secondary py-4">Tidak ada transaksi pada periode ini.</td></tr>';
     }
+
+    document.addEventListener('click', event => {
+      const tab = event.target.closest?.('#srTabs .nav-link');
+      if (tab) showSalesTab(tab.dataset.srtab);
+    });
+    document.addEventListener('input', event => {
+      if (event.target.id === 'srSalesSearch' || event.target.id === 'srItemsSearch') renderSalesTables();
+    });
 
     function downloadCashierReportPdf() {
       if (!lastCashierReport) return alert('Tampilkan laporan terlebih dahulu.');
       if (typeof window.jspdf === 'undefined') return alert('Modul PDF belum siap, coba lagi sebentar.');
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
-      const total = Number(lastCashierReport.summary.total) || 0;
-      const transactions = Number(lastCashierReport.summary.transactions) || 0;
-
+      const r = lastCashierReport;
+      const total = Number(r.summary.total) || 0, transactions = Number(r.summary.transactions) || 0;
       doc.setFontSize(14);
       doc.text(businessSettings.NmUsaha || 'ABID KARYA SAYUR', 14, 16);
       doc.setFontSize(11);
-      doc.text('Laporan Penjualan Kasir', 14, 23);
+      doc.text('Laporan Penjualan', 14, 23);
       doc.setFontSize(9);
-      doc.text(`Periode: ${lastCashierReport.from} s/d ${lastCashierReport.to}`, 14, 29);
-      doc.text(`Kasir: ${currentUser?.Nmuser || currentUser?.KdUser || '-'}`, 14, 34);
-      doc.text(`Total penjualan: ${formatRupiah(total)}  ·  Transaksi: ${transactions}  ·  Rata-rata: ${formatRupiah(transactions ? total / transactions : 0)}`, 14, 39);
-
-      doc.autoTable({
-        startY: 45,
-        head: [['Tanggal', 'Jam', 'No. Faktur', 'Kasir', 'Total']],
-        body: lastCashierReport.sales.map(sale => [sale.tglfak, String(sale.jam).slice(0, 5), sale.nofak, sale.kdkasir, formatRupiah(sale.GTotal)]),
-        styles: { fontSize: 8 },
-        headStyles: { fillColor: [38, 113, 95] }
-      });
-
-      doc.save(`laporan-penjualan-${lastCashierReport.from}-${lastCashierReport.to}.pdf`);
-    }
-
-    async function loadTopSellingReport() {
-      const from = document.getElementById('topSellingFrom').value;
-      const to = document.getElementById('topSellingTo').value;
-      const kdKel = document.getElementById('topSellingGroup').value;
-      try {
-        const response = await fetch(`/api/laporan-barang-terlaris?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&kdKel=${encodeURIComponent(kdKel)}`);
-        const result = await response.json();
-        if (!result.success) throw new Error(result.message || 'Gagal memuat laporan barang terlaris.');
-        result.groupLabel = document.getElementById('topSellingGroup').selectedOptions[0]?.textContent || 'Semua kelompok';
-        lastTopSellingReport = result;
-        const body = document.getElementById('topSellingBody');
-        body.replaceChildren();
-        result.items.forEach(item => {
-          const row = body.insertRow();
-          row.insertCell().textContent = `${item.NmKel} (${item.KdKel})`;
-          row.insertCell().textContent = item.KdBar;
-          row.insertCell().textContent = item.Nmbar;
-          const quantityCell = row.insertCell();
-          quantityCell.className = 'text-end fw-semibold';
-          quantityCell.textContent = formatNumber(item.Qty);
-          row.insertCell().textContent = item.SatKecil || '-';
-          const totalCell = row.insertCell();
-          totalCell.className = 'text-end';
-          totalCell.textContent = formatRupiah(item.Total);
-        });
-        if (!result.items.length) {
-          const row = body.insertRow();
-          const cell = row.insertCell();
-          cell.colSpan = 6;
-          cell.className = 'text-center text-muted py-3';
-          cell.textContent = 'Tidak ada penjualan pada rentang ini.';
-        }
-      } catch (err) {
-        alert(err.message);
-      }
-    }
-
-    function downloadTopSellingReportPdf() {
-      if (!lastTopSellingReport) return alert('Tampilkan laporan terlebih dahulu.');
-      if (typeof window.jspdf === 'undefined') return alert('Modul PDF belum siap, coba lagi sebentar.');
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ orientation: 'landscape' });
-
-      doc.setFontSize(14);
-      doc.text(businessSettings.NmUsaha || 'ABID KARYA SAYUR', 14, 16);
-      doc.setFontSize(11);
-      doc.text('Laporan Barang Terlaris per Kelompok', 14, 23);
-      doc.setFontSize(9);
-      doc.text(`Periode: ${lastTopSellingReport.from} s/d ${lastTopSellingReport.to}`, 14, 29);
-      doc.text(`Kelompok: ${lastTopSellingReport.groupLabel}`, 14, 34);
+      doc.text(`Periode: ${r.from} s/d ${r.to}`, 14, 29);
+      doc.text(`Total: ${formatRupiah(total)} (${transactions} transaksi) | Rata-rata: ${formatRupiah(transactions ? total / transactions : 0)}`, 14, 34);
       doc.autoTable({
         startY: 39,
-        head: [['Kelompok', 'Kode Barang', 'Nama Barang', 'Terjual', 'Satuan', 'Nilai Penjualan']],
-        body: lastTopSellingReport.items.map(item => [
-          `${item.NmKel} (${item.KdKel})`,
-          item.KdBar,
-          item.Nmbar,
-          formatNumber(item.Qty),
-          item.SatKecil || '-',
-          formatRupiah(item.Total)
-        ]),
-        styles: { fontSize: 8 },
-        headStyles: { fillColor: [38, 113, 95] }
+        head: [['Tanggal', 'Jam', 'No. Faktur', 'Kasir', 'Status', 'Total']],
+        body: r.sales.map(s => [s.tglfak, String(s.jam || '').slice(0, 5), s.nofak, s.kdkasir, s.KOND === '1' ? 'Aktif' : 'Batal', formatRupiah(s.GTotal)]),
+        styles: { fontSize: 8 }, columnStyles: { 5: { halign: 'right' } }, headStyles: { fillColor: [79, 124, 255] }
       });
-      doc.save(`laporan-barang-terlaris-${lastTopSellingReport.from}-${lastTopSellingReport.to}.pdf`);
+      doc.save(`laporan-penjualan-${r.from}-${r.to}.pdf`);
     }
 
     async function cancelSale(sale) {
@@ -1719,7 +2158,7 @@
         const result = await response.json();
         if (!result.success) throw new Error(result.message);
         alert(result.message);
-        await loadReport();
+        if (document.getElementById('cashierReportView').classList.contains('d-none')) await loadFullReport(); else await loadCashierReport();
         loadDataBarang();
       } catch (err) { alert(err.message); }
     }
@@ -1740,7 +2179,9 @@
           button.type = 'button';
           button.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
           const description = document.createElement('span');
-          description.textContent = `${item.Nmbar} · ${item.KdBar} · stok ${formatNumber(item.Stok)} ${item.SatKecil || ''}`;
+          const emptyStock = Number(item.Stok) <= 0;
+          description.textContent = `${item.Nmbar} · ${item.KdBar} · stok ${formatNumber(item.Stok)} ${item.SatKecil || ''}${emptyStock ? ' (kosong, tetap bisa dijual)' : ''}`;
+          if (emptyStock) description.classList.add('text-danger');
           const price = document.createElement('strong');
           price.textContent = formatRupiah(item.HJual);
           button.append(description, price);
@@ -1761,10 +2202,6 @@
     function addToSalesCart(item) {
       const current = salesCart.get(item.KdBar);
       const nextQuantity = (current?.Qty || 0) + 1;
-      if (nextQuantity > Number(item.Stok || 0)) {
-        alert(`Stok ${item.Nmbar} tidak cukup.`);
-        return;
-      }
       salesCart.set(item.KdBar, { ...item, Qty: nextQuantity });
       document.getElementById('searchProduct').value = '';
       document.getElementById('productResults').replaceChildren();
@@ -1800,8 +2237,6 @@
       if (!item) return;
       if (!Number.isFinite(quantity) || quantity <= 0) {
         salesCart.delete(kdBar);
-      } else if (quantity > Number(item.Stok || 0)) {
-        alert(`Stok ${item.Nmbar} tidak cukup.`);
       } else {
         item.Qty = quantity;
       }
@@ -1857,7 +2292,7 @@
         });
         quantity.addEventListener('input', () => {
           const value = Number(quantity.value);
-          if (!Number.isFinite(value) || value <= 0 || value > Number(item.Stok || 0)) return;
+          if (!Number.isFinite(value) || value <= 0) return;
           item.Qty = value;
           totalCell.textContent = formatRupiah(Number(item.HJual) * item.Qty);
           updateSaleTotals();
@@ -1888,6 +2323,17 @@
 
     function formatRupiah(value) {
       return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Number(value) || 0);
+    }
+
+    function setPaymentMethod(method) {
+      document.getElementById('paymentMethod').value = method;
+      document.querySelectorAll('#paymentMethodGroup [data-method]').forEach(button => {
+        const active = button.dataset.method === method;
+        button.classList.toggle('active', active);
+        button.classList.toggle('btn-primary', active);
+        button.classList.toggle('btn-outline-secondary', !active);
+      });
+      updateSaleTotals();
     }
 
     function updateSaleTotals() {
@@ -2067,6 +2513,70 @@
       } finally {
         button.disabled = !salesCart.size;
       }
+    }
+
+    async function reprintSale(sale) {
+      try {
+        const params = new URLSearchParams({ nofak: sale.nofak, tglfak: sale.tglfak, kdkasir: sale.kdkasir });
+        const result = await (await fetch(`/api/nota/penjualan?${params}`)).json();
+        if (!result.success) throw new Error(result.message);
+        printNota(result.data, 'sale');
+      } catch (err) { alert(err.message); }
+    }
+
+    async function reprintReturn(noFak) {
+      try {
+        const result = await (await fetch(`/api/nota/retur?nofak=${encodeURIComponent(noFak)}`)).json();
+        if (!result.success) throw new Error(result.message);
+        printNota(result.data, 'return');
+      } catch (err) { alert(err.message); }
+    }
+
+    function printNota(d, kind) {
+      const receipt = document.getElementById('receiptPrint');
+      receipt.replaceChildren();
+      const addLine = (text, className = '') => {
+        const line = document.createElement('p');
+        line.textContent = text || '';
+        if (className) line.className = className;
+        receipt.appendChild(line);
+      };
+      const isReturn = kind === 'return';
+      addLine(businessSettings.NmUsaha || 'ABID KARYA SAYUR', 'fw-bold');
+      addLine(businessSettings.ALUsaha || '');
+      addLine([businessSettings.Kota, businessSettings.NoTelp].filter(Boolean).join(' · '));
+      addLine(isReturn ? '*** NOTA RETUR ***' : (d.KOND === '1' ? '*** CETAK ULANG ***' : '*** CETAK ULANG (BATAL) ***'), 'fw-bold');
+      if (isReturn) {
+        addLine(`No. Retur: ${d.NoFak}`);
+        addLine(`Faktur asal: ${d.SourceNoFak} (${d.SourceTgl})`);
+        addLine(`Tanggal: ${d.TglFak}`);
+      } else {
+        addLine(`Faktur: ${d.nofak}`);
+        addLine(`Tanggal: ${d.tglfak} ${String(d.jam || '').slice(0, 5)}`);
+      }
+      addLine(`Kasir: ${d.NmKasir || ''}`);
+      const table = document.createElement('table');
+      const body = table.createTBody();
+      d.items.forEach(item => {
+        const row = body.insertRow();
+        const product = row.insertCell(); product.colSpan = 2; product.textContent = item.NmBar;
+        const detail = body.insertRow();
+        detail.insertCell().textContent = `${formatNumber(item.Qty)} x ${formatRupiah(item.HJual)}`;
+        const amount = detail.insertCell(); amount.className = 'text-end';
+        amount.textContent = formatRupiah(item.Jumlah);
+      });
+      receipt.appendChild(table);
+      if (isReturn) {
+        addLine(`TOTAL RETUR: ${formatRupiah(d.GTotal)}`, 'receipt-total fw-bold');
+        addLine(`Refund tunai: ${formatRupiah(d.Bayar)}`);
+        addLine('Terima kasih');
+      } else {
+        addLine(`Subtotal: ${formatRupiah(d.total)}`);
+        addLine(`Diskon: ${formatRupiah(d.DiscRp)}`);
+        addLine(`TOTAL: ${formatRupiah(d.GTotal)}`, 'receipt-total fw-bold');
+        [businessSettings.FootJual, businessSettings.FootJual2, businessSettings.FootJual3].filter(Boolean).forEach(line => addLine(line));
+      }
+      window.print();
     }
 
     function printSaleReceipt(result, items, paymentMethod, cashReceived) {
@@ -2257,18 +2767,15 @@
           const kelSelect = document.getElementById('filterKdKel');
           const rakSelect = document.getElementById('filterRak');
           const inputKelSelect = document.getElementById('inputKdKel');
-          const topSellingKelSelect = document.getElementById('topSellingGroup');
           kelompokOptions = result.kelompok;
           kelSelect.replaceChildren(kelSelect.options[0]);
           inputKelSelect.replaceChildren(inputKelSelect.options[0]);
-          topSellingKelSelect.replaceChildren(topSellingKelSelect.options[0]);
           rakSelect.replaceChildren(rakSelect.options[0]);
 
           result.kelompok.forEach(k => {
             const label = result.kelompokNama?.[k] ? `${k} · ${result.kelompokNama[k]}` : k;
             kelSelect.add(new Option(label, k));
             inputKelSelect.add(new Option(label, k));
-            topSellingKelSelect.add(new Option(label, k));
           });
           result.rak.forEach(r => {
             rakSelect.add(new Option(r, r));
@@ -2306,20 +2813,10 @@
 
     async function loadDataBarang(page = currentPage) {
       currentPage = page;
-      const name = document.getElementById('searchName').value.trim();
-      const barcode = document.getElementById('searchBarcode').value.trim();
-      const kdBar = document.getElementById('searchKdBar').value.trim();
-      const kdKel = document.getElementById('filterKdKel').value;
-      const rak = document.getElementById('filterRak').value;
-
-      const params = new URLSearchParams({
-        page: currentPage,
-        limit: 20,
-        searchName: name,
-        searchBarcode: barcode,
-        searchKdBar: kdBar,
-        filterKdKel: kdKel,
-        filterRak: rak
+      const params = new URLSearchParams({ page: currentPage, limit: 20, sortBy: stockSort.by, sortDir: stockSort.dir });
+      document.querySelectorAll('#stockView [data-filter]').forEach(field => {
+        const value = field.value.trim();
+        if (value !== '') params.set(field.dataset.filter, value);
       });
 
       try {
@@ -2352,26 +2849,27 @@
         itemsCache[item.KdBar] = item;
         const markupVal = parseFloat(item.markup || 0).toFixed(2);
 
+        const stockValue = Number(item.Stok ?? item.StAwal);
         tbody.innerHTML += `
           <tr>
-            <td><span class="badge bg-light text-dark border">${item.KdBar}</span></td>
-            <td>${item.Barcode || '-'}</td>
-            <td class="fw-semibold">${item.Nmbar}</td>
-            <td>${item.KdKel || '-'}</td>
-            <td>${item.SatKecil || 'PCS'}</td>
-            <td class="text-end">${formatNumber(item.HBeli)}</td>
-            <td class="text-end fw-semibold text-primary">${formatNumber(item.HJual)}</td>
-            <td class="text-end">${markupVal}%</td>
-            <td class="text-end fw-bold">${formatNumber(item.Stok ?? item.StAwal)}</td>
-            <td>${item.RAK || '-'}</td>
-            <td>${item.KDSUPP || '-'}</td>
-            <td class="text-center">
+            <td data-label="Kode"><span class="badge bg-light text-dark border">${item.KdBar}</span></td>
+            <td data-label="Barcode">${item.Barcode || '-'}</td>
+            <td data-label="Nama Barang" class="fw-semibold">${item.Nmbar}</td>
+            <td data-label="Kelompok">${item.KdKel || '-'}</td>
+            <td data-label="Satuan">${item.SatKecil || 'PCS'}</td>
+            <td data-label="H. Beli" class="text-end">${formatNumber(item.HBeli)}</td>
+            <td data-label="H. Jual" class="text-end fw-semibold text-primary">${formatNumber(item.HJual)}</td>
+            <td data-label="Markup" class="text-end">${markupVal}%</td>
+            <td data-label="Stok" class="text-end fw-bold ${stockValue < 0 ? 'text-negative' : ''}">${formatNumber(item.Stok ?? item.StAwal)}</td>
+            <td data-label="Rak" ${item.RAK && item.RAK !== '0' ? '' : 'data-empty'}>${item.RAK || '-'}</td>
+            <td data-label="Supplier" ${item.KDSUPP && item.KDSUPP !== '0' ? '' : 'data-empty'}>${item.KDSUPP || '-'}</td>
+            <td data-label="Aksi" class="text-center cell-actions">
               <div class="d-flex justify-content-center gap-1">
                 <button class="btn btn-sm btn-outline-warning" onclick="openEditModal('${item.KdBar}')" title="Edit barang">
-                  <i class="bi bi-pencil-square"></i>
+                  <i class="bi bi-pencil-square"></i><span class="d-md-none ms-1">Edit</span>
                 </button>
                 <button class="btn btn-sm btn-outline-danger" onclick="deleteBarang('${item.KdBar}')" title="Hapus barang">
-                  <i class="bi bi-trash"></i>
+                  <i class="bi bi-trash"></i><span class="d-md-none ms-1">Hapus</span>
                 </button>
               </div>
             </td>
@@ -2389,30 +2887,24 @@
 
       const container = document.getElementById('paginationControls');
       container.innerHTML = '';
-
       if (pg.totalPages <= 1) return;
 
-      container.innerHTML += `
-        <li class="page-item ${pg.currentPage === 1 ? 'disabled' : ''}">
-          <a class="page-link" href="#" onclick="loadDataBarang(${pg.currentPage - 1}); return false;">Prev</a>
-        </li>
-      `;
-
+      const item = (label, page, { disabled = false, active = false, extra = '' } = {}) => `
+        <li class="page-item ${disabled ? 'disabled' : ''} ${active ? 'active' : ''} ${extra}">
+          <a class="page-link" href="#" onclick="loadDataBarang(${page}); return false;">${label}</a>
+        </li>`;
+      let html = item('<i class="bi bi-chevron-left"></i>', pg.currentPage - 1, { disabled: pg.currentPage === 1 });
+      let last = 0;
       for (let i = 1; i <= pg.totalPages; i++) {
-        if (i === 1 || i === pg.totalPages || (i >= pg.currentPage - 2 && i <= pg.currentPage + 2)) {
-          container.innerHTML += `
-            <li class="page-item ${i === pg.currentPage ? 'active' : ''}">
-              <a class="page-link" href="#" onclick="loadDataBarang(${i}); return false;">${i}</a>
-            </li>
-          `;
+        if (i === 1 || i === pg.totalPages || (i >= pg.currentPage - 1 && i <= pg.currentPage + 1)) {
+          if (i - last > 1) html += '<li class="page-item disabled d-none d-md-block"><span class="page-link">&hellip;</span></li>';
+          html += item(i, i, { active: i === pg.currentPage, extra: 'd-none d-md-block' });
+          last = i;
         }
       }
-
-      container.innerHTML += `
-        <li class="page-item ${pg.currentPage === pg.totalPages ? 'disabled' : ''}">
-          <a class="page-link" href="#" onclick="loadDataBarang(${pg.currentPage + 1}); return false;">Next</a>
-        </li>
-      `;
+      html += `<li class="page-item disabled d-md-none"><span class="page-link">${pg.currentPage} / ${pg.totalPages}</span></li>`;
+      html += item('<i class="bi bi-chevron-right"></i>', pg.currentPage + 1, { disabled: pg.currentPage === pg.totalPages });
+      container.innerHTML = html;
     }
 
     function openAddModal() {

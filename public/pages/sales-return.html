@@ -9,4 +9,6 @@
       <label class="form-label small" for="salesRefund">Refund tunai</label><input id="salesRefund" type="number" min="0" step="0.01" value="0" class="form-control form-control-sm mb-3">
       <button id="saveSalesReturn" class="btn btn-warning w-100" onclick="saveSalesReturn()"><i class="bi bi-arrow-return-left me-1"></i> Simpan Retur</button>
     </div></div></div></div>
+    <div class="card mt-3"><div class="card-header fw-bold"><i class="bi bi-printer me-1"></i> Riwayat Retur &amp; Cetak Ulang Nota</div>
+      <div class="table-responsive"><table class="table table-sm table-hover mb-0 report-table"><thead><tr><th>Tanggal</th><th>No. Retur</th><th>Faktur Asal</th><th>Kasir</th><th class="text-end">Total</th><th></th></tr></thead><tbody id="returnHistoryBody"></tbody></table></div></div>
   </div>

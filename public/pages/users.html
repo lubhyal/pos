@@ -1,0 +1,14 @@
+<div class="container-fluid px-3 px-lg-4 d-none" id="usersView">
+  <div>
+    <div class="row g-3 mb-3" id="userStats"></div>
+    <div class="card shadow-sm">
+      <div class="card-header d-flex flex-wrap gap-2 align-items-center">
+        <span class="fw-bold me-auto">Daftar User</span>
+        <input id="userSearch" type="search" class="form-control form-control-sm report-search" placeholder="Cari kode / nama...">
+        <select id="userRoleFilter" class="form-select form-select-sm w-auto"><option value="">Semua role</option><option value="kasir">Kasir</option><option value="gudang">Admin Gudang</option><option value="bos">Bos</option><option value="admin">Admin</option></select>
+        <button class="btn btn-sm btn-primary" onclick="openUserForm()"><i class="bi bi-person-plus me-1"></i>Tambah User</button>
+      </div>
+      <div class="table-responsive"><table class="table table-sm table-hover align-middle mb-0 users-table"><thead><tr><th>Kode</th><th>Nama</th><th>Role</th><th>Status</th><th class="text-end">Aksi</th></tr></thead><tbody id="usersTableBody"></tbody></table></div>
+    </div>
+  </div>
+</div>

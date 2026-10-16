@@ -1,0 +1,89 @@
+<div class="container-fluid px-4" id="dashboardView">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+      <div>
+        <h5 class="mb-0 fw-bold" id="dashGreeting">Selamat datang</h5>
+        <small class="text-body-secondary" id="dashDate"></small>
+      </div>
+      <button class="btn btn-sm btn-glass" onclick="loadDashboard()" title="Muat ulang dashboard"><i class="bi bi-arrow-clockwise me-1"></i> Perbarui</button>
+    </div>
+
+    <div class="row g-3 mb-3">
+      <div class="col-sm-6 col-xl-3">
+        <div class="stat-card g-blue"><i class="bi bi-cash-stack stat-icon"></i>
+          <div class="stat-label">Penjualan Hari Ini</div><div class="stat-value" id="dashToday">-</div>
+          <div class="stat-sub" id="dashTodaySub">&nbsp;</div></div>
+      </div>
+      <div class="col-sm-6 col-xl-3">
+        <div class="stat-card g-green"><i class="bi bi-graph-up-arrow stat-icon"></i>
+          <div class="stat-label">Penjualan Bulan Ini</div><div class="stat-value" id="dashMonth">-</div>
+          <div class="stat-sub" id="dashMonthSub">&nbsp;</div></div>
+      </div>
+      <div class="col-sm-6 col-xl-3">
+        <div class="stat-card g-orange"><i class="bi bi-receipt-cutoff stat-icon"></i>
+          <div class="stat-label">Rata-rata per Transaksi</div><div class="stat-value" id="dashProfit">-</div>
+          <div class="stat-sub" id="dashProfitSub">&nbsp;</div></div>
+      </div>
+      <div class="col-sm-6 col-xl-3">
+        <div class="stat-card g-purple"><i class="bi bi-wallet2 stat-icon"></i>
+          <div class="stat-label">Total Piutang Anggota</div><div class="stat-value" id="dashReceivable">-</div>
+          <div class="stat-sub">Saldo belum lunas</div></div>
+      </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+      <div class="col-sm-6 col-xl-3">
+        <div class="mini-stat"><span class="mini-icon g-blue"><i class="bi bi-boxes"></i></span><div><div class="mini-value" id="dashItems">-</div><div class="mini-label">Jenis barang</div></div></div>
+      </div>
+      <div class="col-sm-6 col-xl-3">
+        <div class="mini-stat"><span class="mini-icon g-teal"><i class="bi bi-currency-dollar"></i></span><div><div class="mini-value" id="dashStockValue">-</div><div class="mini-label">Nilai persediaan (harga beli)</div></div></div>
+      </div>
+      <div class="col-sm-6 col-xl-3">
+        <div class="mini-stat"><span class="mini-icon g-orange"><i class="bi bi-exclamation-triangle"></i></span><div><div class="mini-value" id="dashEmpty">-</div><div class="mini-label">Stok kosong</div></div></div>
+      </div>
+      <div class="col-sm-6 col-xl-3">
+        <div class="mini-stat"><span class="mini-icon g-red"><i class="bi bi-dash-circle"></i></span><div><div class="mini-value" id="dashMinus">-</div><div class="mini-label">Stok minus</div></div></div>
+      </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+      <div class="col-xl-8">
+        <div class="card h-100">
+          <div class="card-header"><i class="bi bi-bar-chart-line me-1"></i> Penjualan 14 Hari Terakhir</div>
+          <div class="card-body"><div class="chart-box"><canvas id="dashDailyChart"></canvas></div></div>
+        </div>
+      </div>
+      <div class="col-xl-4">
+        <div class="card h-100">
+          <div class="card-header"><i class="bi bi-pie-chart me-1"></i> Penjualan per Kelompok (Bulan Ini)</div>
+          <div class="card-body"><div class="chart-box"><canvas id="dashGroupChart"></canvas></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <div class="col-xl-4">
+        <div class="card h-100">
+          <div class="card-header"><i class="bi bi-trophy me-1"></i> 5 Barang Terlaris (Bulan Ini)</div>
+          <div class="card-body"><div class="chart-box"><canvas id="dashTopChart"></canvas></div></div>
+        </div>
+      </div>
+      <div class="col-xl-4">
+        <div class="card h-100">
+          <div class="card-header"><i class="bi bi-box-seam me-1"></i> Stok Terendah</div>
+          <div class="table-responsive dash-table"><table class="table table-sm align-middle mb-0">
+            <thead><tr><th>Barang</th><th class="text-end">Stok</th></tr></thead>
+            <tbody id="dashLowStock"><tr><td colspan="2" class="text-center text-muted py-3">Memuat...</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+      <div class="col-xl-4">
+        <div class="card h-100">
+          <div class="card-header"><i class="bi bi-receipt me-1"></i> Transaksi Terakhir</div>
+          <div class="table-responsive dash-table"><table class="table table-sm align-middle mb-0">
+            <thead><tr><th>Faktur</th><th>Kasir</th><th>Jam</th><th class="text-end">Total</th></tr></thead>
+            <tbody id="dashRecent"><tr><td colspan="4" class="text-center text-muted py-3">Memuat...</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+    </div>
+  </div>

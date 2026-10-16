@@ -15,7 +15,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Konfigurasi Database MySQL Remote (192.168.1.16)
 const dbConfig = {
-  host: '192.168.1.16',
+  host: '192.168.1.8',
   user: 'root',
   password: '',
   database: 'cipta',
@@ -153,6 +153,17 @@ async function ensureAuthTables() {
     KEY MemberInvoice (KdAng, NoFak),
     KEY Tgl (Tgl)
   ) TYPE=MyISAM`);
+  await query(`CREATE TABLE IF NOT EXISTS pos_setoran (
+    Tgl date NOT NULL,
+    KdUser varchar(5) NOT NULL,
+    Sistem decimal(14,2) NOT NULL default '0.00',
+    Uang decimal(14,2) NOT NULL default '0.00',
+    Selisih decimal(14,2) NOT NULL default '0.00',
+    Ket varchar(100) default NULL,
+    DicatatOleh varchar(5) default NULL,
+    DicatatPada datetime default NULL,
+    PRIMARY KEY (Tgl, KdUser)
+  ) TYPE=MyISAM`);
   await query('DELETE FROM pos_sessions WHERE ExpiresAt <= NOW()');
   const users = await query('SELECT KdUser FROM pos_auth LIMIT 1');
   if (!users.length) {
@@ -186,10 +197,11 @@ app.use('/api', (req, res, next) => {
   let allowed = commonRead.includes(route) && isRead;
 
   if (req.user.Role === 'kasir') {
-    allowed ||= isRead && ['/anggota', '/kasir', '/penjualan/recent', '/penjualan/pending', '/piutang', '/laporan-kasir'].includes(route);
+    allowed ||= isRead && ['/anggota', '/kasir', '/penjualan/recent', '/penjualan/pending', '/piutang', '/laporan-kasir', '/setoran/saya', '/nota/penjualan', '/nota/retur', '/retur-penjualan/recent'].includes(route);
     allowed ||= isRead && /^\/penjualan\/pending\/[^/]+$/.test(route);
     allowed ||= isRead && (/^\/piutang\/[^/]+$/.test(route) || route === '/retur-penjualan/faktur');
     allowed ||= method === 'POST' && ['/penjualan', '/penjualan/pending', '/penjualan/batal', '/retur-penjualan', '/piutang/bayar'].includes(route);
+    allowed ||= method === 'PUT' && route === '/setoran/saya';
     allowed ||= method === 'DELETE' && /^\/penjualan\/pending\/[^/]+$/.test(route);
   } else if (req.user.Role === 'gudang') {
     allowed ||= isRead && ['/supplier'].includes(route);
@@ -384,6 +396,153 @@ app.put('/api/users/:kdUser', async (req, res) => {
   }
 });
 
+app.delete('/api/users/:kdUser', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const KdUser = String(req.params.kdUser || '').trim();
+  try {
+    if (KdUser === req.user.KdUser) return res.status(400).json({ success: false, message: 'Tidak dapat menghapus akun yang sedang dipakai.' });
+    const rows = await query('SELECT Role, IsActive FROM pos_auth WHERE KdUser = ? LIMIT 1', [KdUser]);
+    if (!rows.length) return res.status(404).json({ success: false, message: 'User tidak ditemukan.' });
+    if (['admin', 'bos'].includes(rows[0].Role) && rows[0].IsActive === 'Y') {
+      const admins = await query("SELECT KdUser FROM pos_auth WHERE Role IN ('admin', 'bos') AND IsActive = 'Y'");
+      if (admins.length <= 1) return res.status(400).json({ success: false, message: 'Tidak dapat menghapus satu-satunya admin.' });
+    }
+    await query('DELETE FROM pos_sessions WHERE KdUser = ?', [KdUser]);
+    await query('DELETE FROM pos_auth WHERE KdUser = ?', [KdUser]);
+    res.json({ success: true, message: 'User berhasil dihapus. Riwayat transaksinya tetap tersimpan.' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Gagal menghapus user.' });
+  }
+});
+
+// Rekonsiliasi kas kasir: uang sistem vs uang real yang disetor, selisih diakumulasi per kasir.
+async function cashierSettlementRows(dateFrom, dateTo, cashier) {
+  const kWhere = cashier ? ' AND KdUser = ?' : '';
+  const jWhere = cashier ? ' AND kdkasir = ?' : '';
+  const kp = cashier ? [dateFrom, dateTo, cashier] : [dateFrom, dateTo];
+  const [sales, cash, saved] = await Promise.all([
+    query(`SELECT DATE_FORMAT(tglfak, '%Y-%m-%d') AS Tgl, kdkasir AS KdUser, COUNT(*) AS Trx, SUM(GTotal) AS Penjualan
+      FROM jual WHERE tglfak BETWEEN ? AND ? AND KOND = '1'${jWhere} GROUP BY tglfak, kdkasir`, kp),
+    query(`SELECT DATE_FORMAT(Tgl, '%Y-%m-%d') AS Tgl, KdUser, (Awal + Masuk - Keluar - Batal) AS Saldo
+      FROM kasjual WHERE Tgl BETWEEN ? AND ?${kWhere}`, kp),
+    query(`SELECT DATE_FORMAT(Tgl, '%Y-%m-%d') AS Tgl, KdUser, Sistem, Uang, Selisih, Ket FROM pos_setoran
+      WHERE Tgl BETWEEN ? AND ?${kWhere}`, kp)
+  ]);
+  const map = new Map();
+  const row = (Tgl, KdUser) => {
+    const key = Tgl + '|' + KdUser;
+    if (!map.has(key)) map.set(key, { Tgl, KdUser, Trx: 0, Penjualan: 0, Sistem: 0, Uang: null, Selisih: null, Ket: null, Tercatat: false });
+    return map.get(key);
+  };
+  sales.forEach(x => { const r = row(x.Tgl, x.KdUser); r.Trx = Number(x.Trx); r.Penjualan = Number(x.Penjualan); r.Sistem = Number(x.Penjualan); });
+  cash.forEach(x => { row(x.Tgl, x.KdUser).Sistem = Number(x.Saldo); });
+  saved.forEach(x => { const r = row(x.Tgl, x.KdUser); r.Uang = Number(x.Uang); r.Selisih = Number(x.Selisih); r.Ket = x.Ket; r.Tercatat = true; });
+  return [...map.values()].sort((a, b) => b.Tgl.localeCompare(a.Tgl) || a.KdUser.localeCompare(b.KdUser));
+}
+
+// Kasir melapor sendiri uang real yang diterima (hanya untuk akunnya sendiri).
+app.get('/api/setoran/saya', async (req, res) => {
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const from = String(req.query.from || today), to = String(req.query.to || today);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to) || from > to) {
+      return res.status(400).json({ success: false, message: 'Rentang tanggal tidak valid.' });
+    }
+    const data = await cashierSettlementRows(from, to, req.user.KdUser);
+    const [total] = await query(`SELECT COUNT(*) AS Hari, IFNULL(SUM(Selisih), 0) AS Total,
+      IFNULL(SUM(CASE WHEN Selisih < 0 THEN Selisih ELSE 0 END), 0) AS Minus,
+      IFNULL(SUM(CASE WHEN Selisih > 0 THEN Selisih ELSE 0 END), 0) AS Plus FROM pos_setoran WHERE KdUser = ?`, [req.user.KdUser]);
+    res.json({ success: true, from, to, data, total });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Gagal mengambil setoran: ' + err.message });
+  }
+});
+
+app.put('/api/setoran/saya', async (req, res) => {
+  const Tgl = String(req.body.Tgl || '');
+  const Uang = Number(req.body.Uang);
+  const Ket = String(req.body.Ket || '').trim().slice(0, 100) || null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(Tgl) || !Number.isFinite(Uang) || Uang < 0) {
+    return res.status(400).json({ success: false, message: 'Tanggal dan uang real (>= 0) wajib valid.' });
+  }
+  const age = (Date.now() - new Date(Tgl + 'T00:00:00Z').getTime()) / 86400000;
+  if (age > 2 || age < -1) return res.status(400).json({ success: false, message: 'Kasir hanya dapat melapor untuk hari ini atau kemarin.' });
+  try {
+    const KdUser = req.user.KdUser;
+    const existing = await query('SELECT DicatatOleh FROM pos_setoran WHERE Tgl = ? AND KdUser = ? LIMIT 1', [Tgl, KdUser]);
+    if (existing.length && existing[0].DicatatOleh !== KdUser) {
+      return res.status(403).json({ success: false, message: 'Setoran ini sudah dikonfirmasi admin dan tidak dapat diubah kasir.' });
+    }
+    const [row] = (await cashierSettlementRows(Tgl, Tgl, KdUser)).filter(r => r.Tgl === Tgl && r.KdUser === KdUser);
+    const Sistem = row ? row.Sistem : 0;
+    const Selisih = Math.round((Uang - Sistem) * 100) / 100;
+    await query('DELETE FROM pos_setoran WHERE Tgl = ? AND KdUser = ?', [Tgl, KdUser]);
+    await query(`INSERT INTO pos_setoran (Tgl, KdUser, Sistem, Uang, Selisih, Ket, DicatatOleh, DicatatPada)
+      VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`, [Tgl, KdUser, Sistem, Uang, Selisih, Ket, KdUser]);
+    res.json({ success: true, message: 'Laporan uang tersimpan.', Sistem, Selisih });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Gagal menyimpan laporan: ' + err.message });
+  }
+});
+
+app.get('/api/setoran', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const dateFrom = String(req.query.from || today);
+    const dateTo = String(req.query.to || today);
+    const cashier = String(req.query.kasir || '').trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateFrom) || !/^\d{4}-\d{2}-\d{2}$/.test(dateTo) || dateFrom > dateTo) {
+      return res.status(400).json({ success: false, message: 'Rentang tanggal tidak valid.' });
+    }
+    const [data, totals, users] = await Promise.all([
+      cashierSettlementRows(dateFrom, dateTo, cashier),
+      query(`SELECT p.KdUser, COALESCE(a.Nmuser, p.KdUser) AS Nmuser, COUNT(*) AS Hari, SUM(p.Selisih) AS Total,
+          SUM(CASE WHEN p.Selisih < 0 THEN p.Selisih ELSE 0 END) AS Minus, SUM(CASE WHEN p.Selisih > 0 THEN p.Selisih ELSE 0 END) AS Plus
+        FROM pos_setoran p LEFT JOIN pos_auth a ON a.KdUser = p.KdUser GROUP BY p.KdUser, Nmuser ORDER BY Total ASC`),
+      query('SELECT KdUser, Nmuser FROM pos_auth ORDER BY Nmuser')
+    ]);
+    const names = Object.fromEntries(users.map(u => [u.KdUser, u.Nmuser]));
+    data.forEach(r => { r.Nmuser = names[r.KdUser] || r.KdUser; });
+    res.json({ success: true, from: dateFrom, to: dateTo, data, totals, users });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Gagal mengambil setoran kasir: ' + err.message });
+  }
+});
+
+app.put('/api/setoran', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const Tgl = String(req.body.Tgl || '');
+  const KdUser = String(req.body.KdUser || '').trim();
+  const Uang = Number(req.body.Uang);
+  const Ket = String(req.body.Ket || '').trim().slice(0, 100) || null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(Tgl) || !KdUser || !Number.isFinite(Uang) || Uang < 0) {
+    return res.status(400).json({ success: false, message: 'Tanggal, kasir, dan uang real (>= 0) wajib valid.' });
+  }
+  try {
+    const [row] = (await cashierSettlementRows(Tgl, Tgl, KdUser)).filter(r => r.Tgl === Tgl && r.KdUser === KdUser);
+    const Sistem = row ? row.Sistem : 0;
+    const Selisih = Math.round((Uang - Sistem) * 100) / 100;
+    await query('DELETE FROM pos_setoran WHERE Tgl = ? AND KdUser = ?', [Tgl, KdUser]);
+    await query(`INSERT INTO pos_setoran (Tgl, KdUser, Sistem, Uang, Selisih, Ket, DicatatOleh, DicatatPada)
+      VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`, [Tgl, KdUser, Sistem, Uang, Selisih, Ket, req.user.KdUser]);
+    res.json({ success: true, message: 'Setoran dicatat.', Sistem, Selisih });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Gagal menyimpan setoran: ' + err.message });
+  }
+});
+
+app.delete('/api/setoran', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const Tgl = String(req.query.Tgl || ''), KdUser = String(req.query.KdUser || '').trim();
+  try {
+    await query('DELETE FROM pos_setoran WHERE Tgl = ? AND KdUser = ?', [Tgl, KdUser]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Gagal menghapus setoran.' });
+  }
+});
+
 async function findBarcodeDuplicate(barcode, excludeKdBar) {
   if (!barcode) return null;
 
@@ -515,7 +674,42 @@ app.get('/api/barang', async (req, res) => {
       params.push(filterRak);
     }
 
+    // Filter per kolom: teks (LIKE) dan rentang angka (min/max)
+    const textColumns = { filterSatuan: 'SatKecil', filterSupplier: 'KDSUPP' };
+    Object.entries(textColumns).forEach(([key, column]) => {
+      const value = String(req.query[key] || '').trim();
+      if (value) {
+        whereClauses.push(`${column} LIKE ?`);
+        params.push(`%${value}%`);
+      }
+    });
+    const numericColumns = {
+      HBeli: 'HBeli',
+      HJual: 'HJual',
+      Markup: '(CASE WHEN HBeli > 0 THEN ((HJual - HBeli) / HBeli * 100) ELSE 0 END)',
+      Stok: '(StAwal + IFNULL(StMasuk, 0) - StKeluar)'
+    };
+    Object.entries(numericColumns).forEach(([name, expression]) => {
+      [['Min', '>='], ['Max', '<=']].forEach(([bound, operator]) => {
+        const raw = req.query[`filter${name}${bound}`];
+        if (raw === undefined || String(raw).trim() === '') return;
+        const value = Number(raw);
+        if (!Number.isFinite(value)) return;
+        whereClauses.push(`${expression} ${operator} ?`);
+        params.push(value);
+      });
+    });
+
     const whereSql = whereClauses.length > 0 ? 'WHERE ' + whereClauses.join(' AND ') : '';
+
+    // Urutan kolom: hanya kolom dalam daftar putih yang boleh dipakai
+    const sortColumns = {
+      KdBar: 'KdBar', Barcode: 'Barcode', Nmbar: 'Nmbar', KdKel: 'KdKel', SatKecil: 'SatKecil',
+      HBeli: 'HBeli', HJual: 'HJual', Markup: 'markup', Stok: 'Stok', RAK: 'RAK', KDSUPP: 'KDSUPP'
+    };
+    const sortColumn = sortColumns[req.query.sortBy] || 'KdBar';
+    const sortDirection = String(req.query.sortDir).toLowerCase() === 'desc' ? 'DESC' : 'ASC';
+    const orderSql = `ORDER BY ${sortColumn} ${sortDirection}` + (sortColumn === 'KdBar' ? '' : ', KdBar ASC');
 
     // Hitung Total Data
     const countSql = `SELECT COUNT(*) as total FROM stock ${whereSql}`;
@@ -530,7 +724,7 @@ app.get('/api/barang', async (req, res) => {
               CASE WHEN HBeli > 0 THEN ((HJual - HBeli) / HBeli * 100) ELSE 0 END AS markup
       FROM stock
       ${whereSql}
-      ORDER BY KdBar ASC
+      ${orderSql}
       LIMIT ? OFFSET ?
     `;
 
@@ -669,10 +863,7 @@ app.post('/api/penjualan', async (req, res) => {
       const product = rows[0];
       if (!product) return res.status(404).json({ success: false, message: `Barang ${kdBar} tidak ditemukan.` });
 
-      const available = Number(product.StAwal || 0) + Number(product.StMasuk || 0) - Number(product.StKeluar || 0);
-      if (qty > available + 0.000001) {
-        return res.status(409).json({ success: false, message: `Stok ${product.Nmbar} tidak cukup. Tersedia ${available}.` });
-      }
+      // Stok kosong tetap boleh dijual; stok akan menjadi minus.
 
       if (priceOverrideByCode.has(kdBar)) product.HJual = priceOverrideByCode.get(kdBar);
       const lineTotal = roundMoney(qty * Number(product.HJual || 0));
@@ -824,8 +1015,6 @@ app.post('/api/penjualan/pending', async (req, res) => {
       const rows = await query('SELECT KdBar, Barcode, Nmbar, Satkecil, HBeli, HPokok, HJual, StAwal, StMasuk, StKeluar FROM stock WHERE KdBar = ? LIMIT 1', [kdBar]);
       if (!rows.length) return res.status(404).json({ success: false, message: `Barang ${kdBar} tidak ditemukan.` });
       const item = rows[0];
-      const available = Number(item.StAwal || 0) + Number(item.StMasuk || 0) - Number(item.StKeluar || 0);
-      if (qty > available + 0.000001) return res.status(409).json({ success: false, message: `Stok ${item.Nmbar} tidak cukup.` });
       if (priceOverride.has(kdBar)) item.HJual = priceOverride.get(kdBar);
       subtotal += qty * Number(item.HJual || 0);
       products.push({ ...item, qty });
@@ -942,13 +1131,60 @@ app.get('/api/penjualan/recent', async (req, res) => {
   }
 });
 
+app.get('/api/nota/penjualan', async (req, res) => {
+  const invoice = String(req.query.nofak || '').trim();
+  const date = String(req.query.tglfak || '').trim();
+  const cashier = hasManagerRole(req.user) ? String(req.query.kdkasir || '').trim() : req.user.KdUser;
+  if (!invoice || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !cashier) return res.status(400).json({ success: false, message: 'Faktur tidak valid.' });
+  try {
+    const headers = await query(`SELECT j.nofak, DATE_FORMAT(j.tglfak, '%Y-%m-%d') AS tglfak, j.jam, j.kdkasir, COALESCE(a.Nmuser, j.kdkasir) AS NmKasir,
+      j.total, j.Disc, j.DiscRp, j.ppn, j.GTotal, j.KOND FROM jual j LEFT JOIN pos_auth a ON a.KdUser = j.kdkasir
+      WHERE j.nofak = ? AND j.tglfak = ? AND j.kdkasir = ? LIMIT 1`, [invoice, date, cashier]);
+    if (!headers.length) return res.status(404).json({ success: false, message: 'Faktur tidak ditemukan.' });
+    const items = await query(`SELECT NmBar, Satuan, Qty, HJual, Jumlah FROM djual WHERE nofak = ? AND TglFak = ? AND KdKasir = ?`, [invoice, date, cashier]);
+    res.json({ success: true, data: { ...headers[0], items } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Gagal memuat nota penjualan.' });
+  }
+});
+
+app.get('/api/retur-penjualan/recent', async (req, res) => {
+  try {
+    const ownerSql = hasManagerRole(req.user) ? '' : ' WHERE KdKasir = ?';
+    const params = hasManagerRole(req.user) ? [] : [req.user.KdUser];
+    const data = await query(`SELECT NoFak, SourceNoFak, DATE_FORMAT(SourceTgl, '%Y-%m-%d') AS SourceTgl, KdKasir,
+      DATE_FORMAT(TglFak, '%Y-%m-%d') AS TglFak, GTotal, Bayar FROM pos_rjual${ownerSql} ORDER BY TglFak DESC, NoFak DESC LIMIT 100`, params);
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Gagal mengambil daftar retur.' });
+  }
+});
+
+app.get('/api/nota/retur', async (req, res) => {
+  const invoice = String(req.query.nofak || '').trim();
+  if (!invoice) return res.status(400).json({ success: false, message: 'No. retur tidak valid.' });
+  try {
+    const ownerSql = hasManagerRole(req.user) ? '' : ' AND r.KdKasir = ?';
+    const params = hasManagerRole(req.user) ? [invoice] : [invoice, req.user.KdUser];
+    const headers = await query(`SELECT r.NoFak, r.SourceNoFak, DATE_FORMAT(r.SourceTgl, '%Y-%m-%d') AS SourceTgl, r.KdKasir,
+      COALESCE(a.Nmuser, r.KdKasir) AS NmKasir, DATE_FORMAT(r.TglFak, '%Y-%m-%d') AS TglFak, r.GTotal, r.Bayar
+      FROM pos_rjual r LEFT JOIN pos_auth a ON a.KdUser = r.KdKasir WHERE r.NoFak = ?${ownerSql} LIMIT 1`, params);
+    if (!headers.length) return res.status(404).json({ success: false, message: 'Retur tidak ditemukan.' });
+    const items = await query(`SELECT d.KdBar, COALESCE(s.Nmbar, d.KdBar) AS NmBar, d.Qty, d.HJual, d.Jumlah
+      FROM pos_rdjual d LEFT JOIN stock s ON s.KdBar = d.KdBar WHERE d.NoFak = ?`, [invoice]);
+    res.json({ success: true, data: { ...headers[0], items } });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Gagal memuat nota retur.' });
+  }
+});
+
 app.get('/api/retur-penjualan/faktur', async (req, res) => {
   const invoice = String(req.query.nofak || '').trim();
   const date = String(req.query.tglfak || '').trim();
   const cashier = hasManagerRole(req.user) ? String(req.query.kdkasir || '').trim() : req.user.KdUser;
   if (!invoice || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !cashier) return res.status(400).json({ success: false, message: 'Faktur penjualan tidak valid.' });
   try {
-    const headers = await query("SELECT nofak, tglfak, kdkasir, GTotal FROM jual WHERE nofak = ? AND tglfak = ? AND kdkasir = ? AND KOND = '1' LIMIT 1", [invoice, date, cashier]);
+    const headers = await query("SELECT nofak, DATE_FORMAT(tglfak, '%Y-%m-%d') AS tglfak, kdkasir, GTotal FROM jual WHERE nofak = ? AND tglfak = ? AND kdkasir = ? AND KOND = '1' LIMIT 1", [invoice, date, cashier]);
     if (!headers.length) return res.status(404).json({ success: false, message: 'Faktur penjualan tidak ditemukan.' });
     const items = await query(`SELECT KdBar, MAX(NmBar) AS NmBar, MAX(Barcode) AS Barcode, MAX(Satuan) AS Satuan,
       SUM(Qty) AS Qty, SUM(Jumlah) AS Jumlah FROM djual
@@ -1703,6 +1939,78 @@ app.get('/api/laporan', async (req, res) => {
   }
 });
 
+// Laporan lengkap satu halaman (khusus admin/bos)
+app.get('/api/laporan-lengkap', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const dateFrom = String(req.query.from || today);
+    const dateTo = String(req.query.to || today);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateFrom) || !/^\d{4}-\d{2}-\d{2}$/.test(dateTo) || dateFrom > dateTo) {
+      return res.status(400).json({ success: false, message: 'Rentang tanggal tidak valid.' });
+    }
+    const cashier = String(req.query.kasir || '').trim();
+    const group = String(req.query.kdKel || '').trim();
+    const jualWhere = "j.tglfak BETWEEN ? AND ? AND j.KOND = '1'" + (cashier ? ' AND j.kdkasir = ?' : '');
+    const jualParams = cashier ? [dateFrom, dateTo, cashier] : [dateFrom, dateTo];
+    const itemWhere = jualWhere + (group ? ' AND s.KdKel = ?' : '');
+    const itemParams = group ? [...jualParams, group] : jualParams;
+    const itemFrom = `djual d INNER JOIN jual j ON j.nofak = d.nofak AND j.tglfak = d.TglFak AND j.kdkasir = d.KdKasir
+      LEFT JOIN stock s ON s.KdBar = d.KdBar LEFT JOIN kelompok k ON k.KDKEL = s.KdKel`;
+
+    const [salesSummary, canceled, daily, purchaseDaily, hourly, byCashier, byGroup, topItems, sales, purchases, bySupplier,
+      purchaseReturns, salesReturns, cashLedger, stockMovements, stockStatus, lowStock, groups, cashiers] = await Promise.all([
+      query(`SELECT COUNT(*) AS trx, IFNULL(SUM(j.GTotal), 0) AS total, IFNULL(SUM(j.DiscRp), 0) AS discount, IFNULL(SUM(j.ppn), 0) AS tax
+        FROM jual j WHERE ${jualWhere}`, jualParams),
+      query(`SELECT COUNT(*) AS trx, IFNULL(SUM(j.GTotal), 0) AS total FROM jual j
+        WHERE j.tglfak BETWEEN ? AND ? AND j.KOND <> '1'${cashier ? ' AND j.kdkasir = ?' : ''}`, jualParams),
+      query(`SELECT DATE_FORMAT(j.tglfak, '%Y-%m-%d') AS tgl, COUNT(*) AS trx, SUM(j.GTotal) AS total FROM jual j
+        WHERE ${jualWhere} GROUP BY j.tglfak ORDER BY j.tglfak`, jualParams),
+      query(`SELECT DATE_FORMAT(TglFak, '%Y-%m-%d') AS tgl, COUNT(*) AS trx, SUM(GTotal) AS total FROM beli
+        WHERE TglFak BETWEEN ? AND ? GROUP BY TglFak ORDER BY TglFak`, [dateFrom, dateTo]),
+      query(`SELECT HOUR(j.jam) AS jam, COUNT(*) AS trx, SUM(j.GTotal) AS total FROM jual j
+        WHERE ${jualWhere} GROUP BY HOUR(j.jam) ORDER BY jam`, jualParams),
+      query(`SELECT j.kdkasir AS kode, COALESCE(a.Nmuser, j.kdkasir) AS nama, COUNT(*) AS trx, SUM(j.GTotal) AS total
+        FROM jual j LEFT JOIN pos_auth a ON a.KdUser = j.kdkasir WHERE ${jualWhere}
+        GROUP BY j.kdkasir, nama ORDER BY total DESC`, jualParams),
+      query(`SELECT COALESCE(k.NMKEL, NULLIF(s.KdKel, ''), 'Tanpa kelompok') AS nama, SUM(d.Qty) AS qty, SUM(d.Jumlah) AS total
+        FROM ${itemFrom} WHERE ${itemWhere} GROUP BY nama ORDER BY total DESC`, itemParams),
+      query(`SELECT d.KdBar AS kode, d.NmBar AS nama, d.Satuan AS satuan, COALESCE(k.NMKEL, '-') AS kelompok, SUM(d.Qty) AS qty, SUM(d.Jumlah) AS total
+        FROM ${itemFrom} WHERE ${itemWhere} GROUP BY d.KdBar, d.NmBar, d.Satuan, kelompok ORDER BY total DESC LIMIT 50`, itemParams),
+      query(`SELECT j.nofak, DATE_FORMAT(j.tglfak, '%Y-%m-%d') AS tglfak, j.kdkasir, j.jam, j.total, j.DiscRp, j.ppn, j.GTotal, j.KdCust, j.KOND
+        FROM jual j WHERE j.tglfak BETWEEN ? AND ?${cashier ? ' AND j.kdkasir = ?' : ''} ORDER BY j.tglfak DESC, j.jam DESC LIMIT 500`, jualParams),
+      query(`SELECT NoFak, DATE_FORMAT(TglFak, '%Y-%m-%d') AS TglFak, Ket, GTotal, Bayar, KDSUPP FROM beli
+        WHERE TglFak BETWEEN ? AND ? ORDER BY TglFak DESC, NoFak DESC LIMIT 500`, [dateFrom, dateTo]),
+      query(`SELECT COALESCE(NULLIF(KDSUPP, ''), 'Tanpa supplier') AS nama, COUNT(*) AS trx, SUM(GTotal) AS total FROM beli
+        WHERE TglFak BETWEEN ? AND ? GROUP BY nama ORDER BY total DESC LIMIT 10`, [dateFrom, dateTo]),
+      query('SELECT COUNT(*) AS trx, IFNULL(SUM(GTotal), 0) AS total FROM rbeli WHERE TglFak BETWEEN ? AND ?', [dateFrom, dateTo]),
+      query(`SELECT NoFak, DATE_FORMAT(TglFak, '%Y-%m-%d') AS TglFak, SourceNoFak, KdKasir, GTotal FROM pos_rjual
+        WHERE TglFak BETWEEN ? AND ? ORDER BY TglFak DESC, NoFak DESC LIMIT 300`, [dateFrom, dateTo]),
+      query("SELECT DATE_FORMAT(Tgl, '%Y-%m-%d') AS Tgl, KdUser, Awal, Masuk, Keluar, Batal, (Awal + Masuk - Keluar - Batal) AS Saldo FROM kasjual WHERE Tgl BETWEEN ? AND ? ORDER BY Tgl DESC, KdUser", [dateFrom, dateTo]),
+      query(`SELECT m.KdBar, s.Nmbar, DATE_FORMAT(m.Tgl, '%Y-%m-%d') AS Tgl, m.NoBukti, m.Qty, m.Status, m.Ket
+        FROM kstock m LEFT JOIN stock s ON s.KdBar = m.KdBar WHERE m.Tgl BETWEEN ? AND ? ORDER BY m.Tgl DESC LIMIT 500`, [dateFrom, dateTo]),
+      query(`SELECT COUNT(*) AS items,
+        IFNULL(SUM(CASE WHEN (StAwal + IFNULL(StMasuk, 0) - StKeluar) = 0 THEN 1 ELSE 0 END), 0) AS empty,
+        IFNULL(SUM(CASE WHEN (StAwal + IFNULL(StMasuk, 0) - StKeluar) < 0 THEN 1 ELSE 0 END), 0) AS minus,
+        IFNULL(SUM(CASE WHEN (StAwal + IFNULL(StMasuk, 0) - StKeluar) > 0 THEN 1 ELSE 0 END), 0) AS ok,
+        IFNULL(SUM(CASE WHEN (StAwal + IFNULL(StMasuk, 0) - StKeluar) > 0 THEN (StAwal + IFNULL(StMasuk, 0) - StKeluar) * HBeli ELSE 0 END), 0) AS value
+        FROM stock`),
+      query(`SELECT KdBar, Nmbar, SatKecil, (StAwal + IFNULL(StMasuk, 0) - StKeluar) AS Stok FROM stock ORDER BY Stok ASC, KdBar ASC LIMIT 30`),
+      query('SELECT KDKEL, NMKEL FROM kelompok ORDER BY NMKEL'),
+      query('SELECT KdUser, Nmuser FROM pos_auth ORDER BY Nmuser')
+    ]);
+    const [purchaseSummary] = await query('SELECT COUNT(*) AS trx, IFNULL(SUM(GTotal), 0) AS total, IFNULL(SUM(Bayar), 0) AS paid FROM beli WHERE TglFak BETWEEN ? AND ?', [dateFrom, dateTo]);
+    const [salesReturnSummary] = await query('SELECT COUNT(*) AS trx, IFNULL(SUM(GTotal), 0) AS total FROM pos_rjual WHERE TglFak BETWEEN ? AND ?', [dateFrom, dateTo]);
+    res.json({
+      success: true, from: dateFrom, to: dateTo,
+      summary: { sales: salesSummary[0], canceled: canceled[0], purchase: purchaseSummary, purchaseReturn: purchaseReturns[0], salesReturn: salesReturnSummary },
+      daily, purchaseDaily, hourly, byCashier, byGroup, topItems, sales, purchases, bySupplier,
+      purchaseReturns: undefined, salesReturns, cashLedger, stockMovements, stockStatus: stockStatus[0], lowStock, groups, cashiers
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Gagal mengambil laporan lengkap: ' + err.message });
+  }
+});
 // Laporan penjualan untuk kasir: kasir hanya melihat transaksi miliknya sendiri, manager melihat semua.
 app.get('/api/laporan-kasir', async (req, res) => {
   try {
@@ -1713,25 +2021,69 @@ app.get('/api/laporan-kasir', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Rentang tanggal tidak valid.' });
     }
 
-    const ownerClause = hasManagerRole(req.user) ? '' : ' AND kdkasir = ?';
-    const ownerParams = hasManagerRole(req.user) ? [] : [req.user.KdUser];
+    const manager = hasManagerRole(req.user);
+    const owner = manager ? String(req.query.kasir || '').trim() : req.user.KdUser;
+    const ownerClause = owner ? ' AND j.kdkasir = ?' : '';
+    const base = owner ? [dateFrom, dateTo, owner] : [dateFrom, dateTo];
+    const valid = "j.tglfak BETWEEN ? AND ? AND j.KOND = '1'" + ownerClause;
 
-    const [summary, hourly, sales] = await Promise.all([
-      query(`SELECT COUNT(*) AS transactions, COALESCE(SUM(GTotal), 0) AS total FROM jual
-        WHERE tglfak BETWEEN ? AND ? AND KOND = '1'${ownerClause}`, [dateFrom, dateTo, ...ownerParams]),
-      query(`SELECT HOUR(jam) AS Jam, COUNT(*) AS Transactions, COALESCE(SUM(GTotal), 0) AS Total FROM jual
-        WHERE tglfak BETWEEN ? AND ? AND KOND = '1'${ownerClause}
-        GROUP BY HOUR(jam) ORDER BY Jam ASC`, [dateFrom, dateTo, ...ownerParams]),
-      query(`SELECT nofak, DATE_FORMAT(tglfak, '%Y-%m-%d') AS tglfak, jam, kdkasir, GTotal FROM jual
-        WHERE tglfak BETWEEN ? AND ? AND KOND = '1'${ownerClause}
-        ORDER BY tglfak DESC, jam DESC LIMIT 300`, [dateFrom, dateTo, ...ownerParams])
+    const [summary, canceled, hourly, daily, byCashier, items, sales, users] = await Promise.all([
+      query(`SELECT COUNT(*) AS transactions, COALESCE(SUM(j.GTotal), 0) AS total, COALESCE(SUM(j.DiscRp), 0) AS discount FROM jual j WHERE ${valid}`, base),
+      query(`SELECT COUNT(*) AS transactions, COALESCE(SUM(j.GTotal), 0) AS total FROM jual j WHERE j.tglfak BETWEEN ? AND ? AND j.KOND <> '1'${ownerClause}`, base),
+      query(`SELECT HOUR(j.jam) AS Jam, COUNT(*) AS Transactions, COALESCE(SUM(j.GTotal), 0) AS Total FROM jual j WHERE ${valid} GROUP BY HOUR(j.jam) ORDER BY Jam ASC`, base),
+      query(`SELECT DATE_FORMAT(j.tglfak, '%Y-%m-%d') AS Tgl, COUNT(*) AS Transactions, COALESCE(SUM(j.GTotal), 0) AS Total FROM jual j WHERE ${valid} GROUP BY j.tglfak ORDER BY j.tglfak ASC`, base),
+      query(`SELECT j.kdkasir AS Kode, COALESCE(a.Nmuser, j.kdkasir) AS Nama, COUNT(*) AS Transactions, COALESCE(SUM(j.GTotal), 0) AS Total
+        FROM jual j LEFT JOIN pos_auth a ON a.KdUser = j.kdkasir WHERE ${valid} GROUP BY j.kdkasir, Nama ORDER BY Total DESC`, base),
+      query(`SELECT d.KdBar AS Kode, d.NmBar AS Nama, d.Satuan AS Satuan, SUM(d.Qty) AS Qty, SUM(d.Jumlah) AS Total
+        FROM djual d INNER JOIN jual j ON j.nofak = d.nofak AND j.tglfak = d.TglFak AND j.kdkasir = d.KdKasir
+        WHERE ${valid} GROUP BY d.KdBar, d.NmBar, d.Satuan ORDER BY Total DESC LIMIT 100`, base),
+      query(`SELECT j.nofak, DATE_FORMAT(j.tglfak, '%Y-%m-%d') AS tglfak, j.jam, j.kdkasir, j.total, j.DiscRp, j.GTotal, j.KOND FROM jual j
+        WHERE j.tglfak BETWEEN ? AND ?${ownerClause} ORDER BY j.tglfak DESC, j.jam DESC LIMIT 500`, base),
+      manager ? query('SELECT KdUser, Nmuser FROM pos_auth ORDER BY Nmuser') : Promise.resolve([])
     ]);
-    res.json({ success: true, from: dateFrom, to: dateTo, summary: summary[0], hourly, sales });
+    res.json({ success: true, from: dateFrom, to: dateTo, manager, summary: summary[0], canceled: canceled[0], hourly, daily, byCashier, items, sales, users });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Gagal mengambil laporan penjualan: ' + err.message });
   }
 });
 
+// Ringkasan dashboard (khusus admin/bos)
+app.get('/api/dashboard', async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  try {
+    const valid = "KOND = '1'";
+    const [today] = await query(`SELECT IFNULL(SUM(GTotal), 0) AS total, COUNT(*) AS trx FROM jual WHERE tglfak = CURDATE() AND ${valid}`);
+    const [yesterday] = await query(`SELECT IFNULL(SUM(GTotal), 0) AS total, COUNT(*) AS trx FROM jual WHERE tglfak = DATE_SUB(CURDATE(), INTERVAL 1 DAY) AND ${valid}`);
+    const [month] = await query(`SELECT IFNULL(SUM(GTotal), 0) AS total, COUNT(*) AS trx FROM jual WHERE tglfak >= DATE_FORMAT(CURDATE(), '%Y-%m-01') AND ${valid}`);
+    const [profit] = await query(`SELECT IFNULL(SUM(d.Qty), 0) AS qty
+      FROM djual d INNER JOIN jual j ON j.nofak = d.nofak AND j.tglfak = d.TglFak AND j.kdkasir = d.KdKasir
+      WHERE j.tglfak >= DATE_FORMAT(CURDATE(), '%Y-%m-01') AND j.KOND = '1'`);
+    const daily = await query(`SELECT DATE_FORMAT(tglfak, '%Y-%m-%d') AS tgl, SUM(GTotal) AS total, COUNT(*) AS trx
+      FROM jual WHERE tglfak >= DATE_SUB(CURDATE(), INTERVAL 13 DAY) AND ${valid} GROUP BY tglfak ORDER BY tglfak`);
+    const byGroup = await query(`SELECT COALESCE(k.NMKEL, NULLIF(s.KdKel, ''), 'Tanpa kelompok') AS nama, SUM(d.Jumlah) AS total
+      FROM djual d INNER JOIN jual j ON j.nofak = d.nofak AND j.tglfak = d.TglFak AND j.kdkasir = d.KdKasir
+      LEFT JOIN stock s ON s.KdBar = d.KdBar LEFT JOIN kelompok k ON k.KDKEL = s.KdKel
+      WHERE j.tglfak >= DATE_FORMAT(CURDATE(), '%Y-%m-01') AND j.KOND = '1'
+      GROUP BY nama ORDER BY total DESC LIMIT 6`);
+    const topItems = await query(`SELECT d.NmBar AS nama, SUM(d.Qty) AS qty, SUM(d.Jumlah) AS total
+      FROM djual d INNER JOIN jual j ON j.nofak = d.nofak AND j.tglfak = d.TglFak AND j.kdkasir = d.KdKasir
+      WHERE j.tglfak >= DATE_FORMAT(CURDATE(), '%Y-%m-01') AND j.KOND = '1'
+      GROUP BY d.KdBar, d.NmBar ORDER BY total DESC LIMIT 5`);
+    const [stock] = await query(`SELECT COUNT(*) AS items,
+        IFNULL(SUM(CASE WHEN (StAwal + IFNULL(StMasuk, 0) - StKeluar) = 0 THEN 1 ELSE 0 END), 0) AS empty,
+        IFNULL(SUM(CASE WHEN (StAwal + IFNULL(StMasuk, 0) - StKeluar) < 0 THEN 1 ELSE 0 END), 0) AS minus,
+        IFNULL(SUM(CASE WHEN (StAwal + IFNULL(StMasuk, 0) - StKeluar) > 0 THEN (StAwal + IFNULL(StMasuk, 0) - StKeluar) * HBeli ELSE 0 END), 0) AS value
+      FROM stock`);
+    const lowStock = await query(`SELECT KdBar, Nmbar, SatKecil, (StAwal + IFNULL(StMasuk, 0) - StKeluar) AS Stok
+      FROM stock ORDER BY Stok ASC, KdBar ASC LIMIT 8`);
+    const [receivable] = await query('SELECT IFNULL(SUM(GGantung), 0) AS total FROM anggota');
+    const recent = await query(`SELECT nofak, kdkasir, jam, GTotal FROM jual WHERE ${valid} ORDER BY tglfak DESC, jam DESC LIMIT 8`);
+
+    res.json({ success: true, today, yesterday, month, profit, daily, byGroup, topItems, stock, lowStock, receivable: receivable.total, recent });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Gagal memuat dashboard: ' + err.message });
+  }
+});
 app.get('/api/laporan-barang-terlaris', async (req, res) => {
   try {
     const today = new Date().toISOString().slice(0, 10);
