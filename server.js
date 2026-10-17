@@ -292,7 +292,7 @@ app.post('/api/auth/login', async (req, res) => {
   const KdUser = String(req.body.KdUser || '').trim();
   const password = String(req.body.password || '');
   try {
-    const rows = await query(`SELECT a.KdUser, a.Nmuser, a.PasswordHash, a.Role, a.IsActive
+    const rows = await query(`SELECT a.KdUser, a.Nmuser, a.PasswordHash, a.Role, a.IsActive, a.CanCashier
       FROM pos_auth a WHERE a.KdUser = ? LIMIT 1`, [KdUser]);
     const user = rows[0];
     if (!user || user.IsActive !== 'Y' || !(await verifyPassword(password, user.PasswordHash))) {
