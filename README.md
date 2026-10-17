@@ -6,7 +6,8 @@ Aplikasi kasir, stok, dan laporan berbasis web berbahasa Indonesia. Aplikasi dij
 
 - **Satu aplikasi untuk semuanya:** kasir, stok, pembelian, retur, piutang, laporan, dan manajemen user.
 - **Ringan dan tanpa instalasi di klien:** cukup browser; bisa ditambahkan ke layar utama HP seperti aplikasi.
-- **Tampilan modern:** gaya dashboard admin dengan tema gradient/glass, mode terang dan gelap, serta responsif untuk HP (tabel stok berubah menjadi kartu ringkas).
+- **Tampilan modern:** gaya dashboard admin bernuansa hijau dan kuning dengan tema gradient/glass, mode terang dan gelap (kontras teks tabel disesuaikan), serta responsif untuk HP (semua tabel berubah menjadi kartu).
+- **Cetak barcode dan nota ringkas:** label barcode 40x20 mm untuk printer thermal, dan nota compact yang tetap lengkap.
 - **Kasir tidak terhambat stok:** barang dengan stok kosong tetap bisa dijual; stok tercatat minus sehingga selisih mudah ditelusuri.
 - **Kontrol kasir yang jelas:** setiap kasir melaporkan uang real, selisih plus/minus dihitung otomatis dan dicatat.
 - **Akses berdasarkan peran:** admin/bos, kasir, dan gudang hanya melihat menu sesuai tugasnya.
@@ -23,13 +24,14 @@ Halaman awal berisi statistik penjualan, jumlah transaksi, ringkasan stok, grafi
 - **Filter dan urutan per kolom:** nama A–Z/Z–A, stok 1–10/10–1, harga beli, harga jual, kelompok, dan lainnya.
 - Tambah, ubah, hapus barang; impor/ekspor Excel (template tersedia).
 - Stok minus ditampilkan jelas (warna merah).
-- Di HP, tabel tampil sebagai kartu padat tanpa geser kiri-kanan.
+- Di HP, semua tabel tampil sebagai kartu tanpa geser kiri-kanan.
+- **Print Barcode:** tombol **Barcode** di setiap baris stok membuka pratinjau label (kode barcode, nomor, nama barang, harga) dan jumlah label yang dicetak. Ukuran label 40x20 mm. Di dialog cetak browser pilih printer thermal, atur ukuran kertas 40x20 mm, margin **None**, dan skala 100%. Barcode memakai kolom Barcode barang (EAN-13 bila 13 digit valid, selain itu CODE128), atau kode barang bila kosong. Library barcode dimuat dari internet (CDN).
 
 ### Kasir (penjualan)
 - Cari barang berdasarkan nama, kode, atau barcode, lalu tambahkan ke keranjang.
-- Diskon, pembayaran **tunai**, **kartu**, atau **kredit/piutang** (dengan uang muka).
+- Diskon dan pembayaran **Tunai**, **QRIS**, **Transfer**, atau **EDC**. Pembayaran non-tunai tidak menampilkan kolom uang diterima. Layar kasir dirancang tanpa mouse (scanner + keyboard, lihat Cara transaksi).
 - Transaksi **tertunda (pending)** dapat disimpan dan dilanjutkan nanti.
-- Struk otomatis dicetak (dapat dimatikan di Pengaturan).
+- Struk otomatis dicetak (dapat dimatikan di Pengaturan). Nota berformat compact (80 mm): identitas usaha, faktur, tanggal, kasir, item satu baris, jumlah item, total, rincian pembayaran.
 - Stok kosong tetap bisa di-checkout; stok menjadi minus.
 - Pembatalan transaksi.
 
@@ -41,7 +43,7 @@ Halaman awal berisi statistik penjualan, jumlah transaksi, ringkasan stok, grafi
 Pilih faktur asal, isi jumlah retur per barang (tidak boleh melebihi sisa), tentukan refund tunai. Stok bertambah kembali dan kas kasir terkoreksi. **Nota retur** langsung tercetak setelah disimpan.
 
 ### Pembelian dan Retur Beli
-Catat pembelian dari supplier (stok dan harga beli ikut diperbarui), serta retur ke supplier.
+Catat pembelian dari supplier (stok dan harga beli ikut diperbarui), serta retur ke supplier. Pada form pembelian yang sama, **harga beli dan harga jual** dapat diisi/diubah per barang (margin ditampilkan, merah bila negatif); keduanya otomatis tersimpan ke data barang saat pembelian disimpan.
 
 ### Stok Opname
 Sesuaikan stok sistem dengan hasil hitung fisik; selisih dicatat di kartu stok.
@@ -59,6 +61,16 @@ Daftar piutang pelanggan/anggota dan pencatatan pembayaran cicilan.
 - Kasir mengisi **uang real** yang didapat untuk hari ini atau kemarin; sistem menghitung selisih (plus/minus) dan akumulasinya.
 - Admin melihat semua kasir, dapat mengoreksi atau menghapus catatan. Laporan yang sudah dikoreksi admin tidak dapat diubah kasir.
 
+### Kas Awal (Uang Laci)
+- Setiap hari, saat membuka menu Kasir, kasir wajib mengisi **kas awal** (uang modal di laci). Penjualan ditolak sebelum kas awal diisi.
+- Kas awal masuk ke **Uang Sistem** dan tampil di kolom **Kas Awal** pada Setoran & Selisih. Ubah dengan tombol di strip atas kasir atau **F9**.
+- Setelah ada transaksi hari itu, kas awal hanya dapat diubah admin.
+
+### Admin Gudang Merangkap Kasir
+Di Manajemen User, role **Admin Gudang** punya opsi **"Boleh juga menjadi kasir"**. Bila aktif, menu Kasir muncul dan kas awal serta setoran berlaku sama seperti kasir.
+
+Saat server pertama kali dijalankan, tabel `pos_kasawal` dan kolom `CanCashier` pada `pos_auth` dibuat otomatis.
+
 ### Laporan Lengkap (admin/bos)
 Satu halaman berisi filter tanggal/kasir/kelompok, tab Ringkasan, Penjualan, Barang, Pembelian, Retur, Kas, dan Stok, lengkap dengan grafik, pencarian tabel, dan ekspor CSV.
 
@@ -66,7 +78,7 @@ Satu halaman berisi filter tanggal/kasir/kelompok, tab Ringkasan, Penjualan, Bar
 Tambah, ubah, ganti password, dan **hapus** user. Pencarian dan filter berdasarkan role. Sistem mencegah penghapusan akun sendiri dan admin terakhir.
 
 ### Data Master dan Pengaturan
-Kelompok barang, supplier, anggota/pelanggan; profil usaha, header/footer struk, dan opsi cetak.
+Kelompok barang, supplier, anggota/pelanggan; profil usaha, header/footer struk, dan opsi cetak. Di **Pengaturan** admin juga dapat mengunggah **logo toko** (PNG/JPG) yang otomatis diubah hitam-putih dan dicetak di atas nama toko pada nota. Logo disimpan di file `logo.dat` di folder aplikasi. Teks nota dicetak tebal agar jelas di printer thermal.
 
 ## Hak akses per role
 
@@ -106,13 +118,15 @@ Jika belum ada user, aplikasi meminta pembuatan akun administrator pertama (mema
 
 ## Cara transaksi (kasir)
 
-1. Buka menu **Kasir**.
-2. Cari barang (nama/kode/barcode) lalu klik untuk menambah ke keranjang; ubah jumlah bila perlu.
-3. Isi diskon (jika ada) dan pilih pelanggan bila transaksi kredit.
-4. Pilih pembayaran:
-   - **Tunai:** isi uang diterima, kembalian dihitung otomatis.
-   - **Kartu:** pilih kartu.
-   - **Kredit:** isi uang muka; sisa menjadi piutang.
+1. Buka menu **Kasir**. Kursor otomatis ada di kolom scan; semua bisa dilakukan hanya dengan scanner dan keyboard (tanpa mouse):
+   - **Scan barcode** (atau ketik nama/kode) lalu **Enter** menambah barang. Untuk pencarian nama, **↑/↓** memilih hasil.
+   - Dengan kolom scan kosong: **↑/↓** memilih baris keranjang, **+ / -** mengubah qty, **Del** menghapus baris.
+   - **Alt+1 Tunai, Alt+2 QRIS, Alt+3 Transfer, Alt+4 EDC.**
+   - **Enter** pada kolom scan kosong = bayar. Tunai: kolom uang diterima terisi total (Enter = uang pas, atau ketik nominal lalu Enter). Non-tunai: transaksi langsung diselesaikan, tanpa kolom uang diterima.
+   - **F2** tunda transaksi, **F4** panggil tertunda, **Ctrl+Del** kosongkan keranjang, **Esc** kembali ke kolom scan.
+2. Kembalian tampil besar di panel pembayaran dan kolom scan siap untuk pelanggan berikutnya.
+3. Isi diskon atau pilih anggota bila perlu (opsional).
+4. Metode pembayaran: **Tunai, QRIS, Transfer, EDC**.
 5. Selesaikan transaksi. Struk tercetak dan stok berkurang.
 6. Pelanggan menunggu? Simpan sebagai **transaksi tertunda**, lanjutkan dari daftar tertunda.
 7. Salah input? Batalkan lewat **Laporan Penjualan → Transaksi → Batal**.

@@ -6,9 +6,20 @@
           <input id="opnameSearch" class="form-control" autocomplete="off" placeholder="Barcode, kode, atau nama barang">
           <div id="opnameResults" class="list-group mt-2"></div>
         </div></div>
-        <div class="card shadow-sm"><div class="table-responsive">
+        <div class="card shadow-sm mb-3"><div class="table-responsive">
           <table class="table table-sm align-middle mb-0"><thead class="table-light"><tr><th>Barang</th><th class="text-end">Stok sistem</th><th class="text-center">Stok fisik</th><th class="text-end">Selisih</th><th></th></tr></thead><tbody id="opnameCartBody"></tbody></table>
         </div></div>
+        <div class="card shadow-sm">
+          <div class="card-header d-flex flex-wrap align-items-center gap-2">
+            <span class="fw-bold"><i class="bi bi-exclamation-triangle text-danger me-1"></i>Barang Stok Minus</span>
+            <span class="badge text-bg-danger" id="opnameMinusCount">0</span>
+            <button type="button" class="btn btn-sm btn-outline-secondary ms-auto" onclick="loadOpnameMinus()"><i class="bi bi-arrow-clockwise"></i> Muat ulang</button>
+            <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddAllMinus" onclick="addAllMinusToOpname()">Tambah semua ke opname</button>
+          </div>
+          <div class="table-responsive" style="max-height:45vh">
+            <table class="table table-sm align-middle mb-0"><thead class="table-light sticky-top"><tr><th>Kode</th><th>Barang</th><th class="text-end">Stok</th><th></th></tr></thead><tbody id="opnameMinusBody"></tbody></table>
+          </div>
+        </div>
       </div>
       <div class="col-lg-4"><div class="card shadow-sm"><div class="card-header fw-bold">Hitung Stok Fisik</div><div class="card-body">
         <label for="opnameDate" class="form-label small">Tanggal opname</label>

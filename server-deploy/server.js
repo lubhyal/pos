@@ -2,6 +2,7 @@ const express = require('express');
 const mysql = require('mysql');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const crypto = require('crypto');
 
 const app = express();
@@ -15,7 +16,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Konfigurasi Database MySQL Remote (192.168.1.16)
 const dbConfig = {
-  host: '192.168.1.16',
+  host: '192.168.1.8',
   user: 'root',
   password: '',
   database: 'cipta',
@@ -95,7 +96,7 @@ async function createSession(res, user) {
 async function getSessionUser(token) {
   if (!token || !/^[a-f0-9]{64}$/.test(token)) return null;
   const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-  const rows = await query(`SELECT a.KdUser, a.Nmuser, a.Role
+  const rows = await query(`SELECT a.KdUser, a.Nmuser, a.Role, a.CanCashier
     FROM pos_sessions s JOIN pos_auth a ON a.KdUser = s.KdUser
     WHERE s.TokenHash = ? AND s.ExpiresAt > NOW() AND a.IsActive = 'Y' LIMIT 1`, [tokenHash]);
   return rows[0] || null;
@@ -164,6 +165,16 @@ async function ensureAuthTables() {
     DicatatPada datetime default NULL,
     PRIMARY KEY (Tgl, KdUser)
   ) TYPE=MyISAM`);
+  await query(`CREATE TABLE IF NOT EXISTS pos_kasawal (
+    Tgl date NOT NULL,
+    KdUser varchar(5) NOT NULL,
+    Awal decimal(14,2) NOT NULL default '0.00',
+    DicatatOleh varchar(5) default NULL,
+    DicatatPada datetime default NULL,
+    PRIMARY KEY (Tgl, KdUser)
+  ) TYPE=MyISAM`);
+  const cashierColumn = await query("SHOW COLUMNS FROM pos_auth LIKE 'CanCashier'");
+  if (!cashierColumn.length) await query("ALTER TABLE pos_auth ADD COLUMN CanCashier char(1) NOT NULL default 'N'");
   await query('DELETE FROM pos_sessions WHERE ExpiresAt <= NOW()');
   const users = await query('SELECT KdUser FROM pos_auth LIMIT 1');
   if (!users.length) {
@@ -193,17 +204,18 @@ app.use('/api', (req, res, next) => {
   const method = req.method;
   const route = req.path;
   const isRead = method === 'GET';
-  const commonRead = ['/options', '/barang', '/cari-barang', '/kode-barang-berikutnya', '/kelompok', '/pengaturan'];
+  const commonRead = ['/options', '/barang', '/cari-barang', '/kode-barang-berikutnya', '/kelompok', '/pengaturan', '/logo'];
   let allowed = commonRead.includes(route) && isRead;
 
-  if (req.user.Role === 'kasir') {
-    allowed ||= isRead && ['/anggota', '/kasir', '/penjualan/recent', '/penjualan/pending', '/piutang', '/laporan-kasir', '/setoran/saya', '/nota/penjualan', '/nota/retur', '/retur-penjualan/recent'].includes(route);
+  if (req.user.Role === 'kasir' || (req.user.Role === 'gudang' && req.user.CanCashier === 'Y')) {
+    allowed ||= isRead && ['/anggota', '/kasir', '/penjualan/recent', '/penjualan/pending', '/piutang', '/laporan-kasir', '/setoran/saya', '/kas-awal', '/nota/penjualan', '/nota/retur', '/retur-penjualan/recent'].includes(route);
     allowed ||= isRead && /^\/penjualan\/pending\/[^/]+$/.test(route);
     allowed ||= isRead && (/^\/piutang\/[^/]+$/.test(route) || route === '/retur-penjualan/faktur');
     allowed ||= method === 'POST' && ['/penjualan', '/penjualan/pending', '/penjualan/batal', '/retur-penjualan', '/piutang/bayar'].includes(route);
-    allowed ||= method === 'PUT' && route === '/setoran/saya';
+    allowed ||= method === 'PUT' && ['/setoran/saya', '/kas-awal'].includes(route);
     allowed ||= method === 'DELETE' && /^\/penjualan\/pending\/[^/]+$/.test(route);
-  } else if (req.user.Role === 'gudang') {
+  }
+  if (req.user.Role === 'gudang') {
     allowed ||= isRead && ['/supplier'].includes(route);
     allowed ||= isRead && ['/pembelian/recent'].includes(route);
     allowed ||= isRead && /^\/pembelian\/[^/]+$/.test(route);
@@ -287,7 +299,7 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(401).json({ success: false, message: 'Kode user atau password salah.' });
     }
     await createSession(res, user);
-    res.json({ success: true, user: { KdUser: user.KdUser, Nmuser: user.Nmuser, Role: user.Role } });
+    res.json({ success: true, user: { KdUser: user.KdUser, Nmuser: user.Nmuser, Role: user.Role, CanCashier: user.CanCashier } });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Login gagal diproses.' });
   }
@@ -330,7 +342,7 @@ app.post('/api/auth/logout', async (req, res) => {
 app.get('/api/users', async (req, res) => {
   if (!requireAdmin(req, res)) return;
   try {
-    const data = await query('SELECT KdUser, Nmuser, Role, IsActive FROM pos_auth ORDER BY Nmuser ASC');
+    const data = await query('SELECT KdUser, Nmuser, Role, IsActive, CanCashier FROM pos_auth ORDER BY Nmuser ASC');
     res.json({ success: true, data });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Gagal mengambil user.' });
@@ -353,9 +365,8 @@ app.post('/api/users', async (req, res) => {
     if (legacyUser.length) await query('UPDATE kunci SET Nmuser = ? WHERE KdUser = ?', [Nmuser, KdUser]);
     else await query('INSERT INTO kunci (KdUser, Nmuser) VALUES (?, ?)', [KdUser, Nmuser]);
     const PasswordHash = await hashPassword(password);
-    await query('INSERT INTO pos_auth (KdUser, Nmuser, PasswordHash, Role, IsActive) VALUES (?, ?, ?, ?, ?)',
-      [KdUser, Nmuser, PasswordHash, Role, 'Y']);
-    res.json({ success: true, message: 'User berhasil ditambahkan.' });
+    await query('INSERT INTO pos_auth (KdUser, Nmuser, PasswordHash, Role, IsActive, CanCashier) VALUES (?, ?, ?, ?, ?, ?)',
+      [KdUser, Nmuser, PasswordHash, Role, 'Y', Role === 'gudang' && req.body.CanCashier === 'Y' ? 'Y' : 'N']);
   } catch (err) {
     res.status(500).json({ success: false, message: 'Gagal menambah user.' });
   }
@@ -380,7 +391,8 @@ app.put('/api/users/:kdUser', async (req, res) => {
       if (admins.length <= 1) return res.status(400).json({ success: false, message: 'Tidak dapat menonaktifkan atau menurunkan satu-satunya admin.' });
     }
 
-    await query('UPDATE pos_auth SET Nmuser = ?, Role = ?, IsActive = ? WHERE KdUser = ?', [Nmuser, Role, IsActive, KdUser]);
+    await query('UPDATE pos_auth SET Nmuser = ?, Role = ?, IsActive = ?, CanCashier = ? WHERE KdUser = ?',
+      [Nmuser, Role, IsActive, Role === 'gudang' && req.body.CanCashier === 'Y' ? 'Y' : 'N', KdUser]);
     await query('UPDATE kunci SET Nmuser = ? WHERE KdUser = ?', [Nmuser, KdUser]);
     if (password) {
       const PasswordHash = await hashPassword(password);
@@ -423,7 +435,7 @@ async function cashierSettlementRows(dateFrom, dateTo, cashier) {
   const [sales, cash, saved] = await Promise.all([
     query(`SELECT DATE_FORMAT(tglfak, '%Y-%m-%d') AS Tgl, kdkasir AS KdUser, COUNT(*) AS Trx, SUM(GTotal) AS Penjualan
       FROM jual WHERE tglfak BETWEEN ? AND ? AND KOND = '1'${jWhere} GROUP BY tglfak, kdkasir`, kp),
-    query(`SELECT DATE_FORMAT(Tgl, '%Y-%m-%d') AS Tgl, KdUser, (Awal + Masuk - Keluar - Batal) AS Saldo
+    query(`SELECT DATE_FORMAT(Tgl, '%Y-%m-%d') AS Tgl, KdUser, Awal, (Awal + Masuk - Keluar - Batal) AS Saldo
       FROM kasjual WHERE Tgl BETWEEN ? AND ?${kWhere}`, kp),
     query(`SELECT DATE_FORMAT(Tgl, '%Y-%m-%d') AS Tgl, KdUser, Sistem, Uang, Selisih, Ket FROM pos_setoran
       WHERE Tgl BETWEEN ? AND ?${kWhere}`, kp)
@@ -431,11 +443,11 @@ async function cashierSettlementRows(dateFrom, dateTo, cashier) {
   const map = new Map();
   const row = (Tgl, KdUser) => {
     const key = Tgl + '|' + KdUser;
-    if (!map.has(key)) map.set(key, { Tgl, KdUser, Trx: 0, Penjualan: 0, Sistem: 0, Uang: null, Selisih: null, Ket: null, Tercatat: false });
+    if (!map.has(key)) map.set(key, { Tgl, KdUser, Trx: 0, Penjualan: 0, Awal: 0, Sistem: 0, Uang: null, Selisih: null, Ket: null, Tercatat: false });
     return map.get(key);
   };
   sales.forEach(x => { const r = row(x.Tgl, x.KdUser); r.Trx = Number(x.Trx); r.Penjualan = Number(x.Penjualan); r.Sistem = Number(x.Penjualan); });
-  cash.forEach(x => { row(x.Tgl, x.KdUser).Sistem = Number(x.Saldo); });
+  cash.forEach(x => { const r = row(x.Tgl, x.KdUser); r.Sistem = Number(x.Saldo); r.Awal = Number(x.Awal); });
   saved.forEach(x => { const r = row(x.Tgl, x.KdUser); r.Uang = Number(x.Uang); r.Selisih = Number(x.Selisih); r.Ket = x.Ket; r.Tercatat = true; });
   return [...map.values()].sort((a, b) => b.Tgl.localeCompare(a.Tgl) || a.KdUser.localeCompare(b.KdUser));
 }
@@ -803,6 +815,8 @@ app.post('/api/penjualan', async (req, res) => {
   try {
     const cashierRows = await query('SELECT KdUser FROM kunci WHERE KdUser = ? LIMIT 1', [cashier]);
     if (!cashierRows.length) return res.status(400).json({ success: false, message: 'Kode kasir tidak ditemukan.' });
+    const openingRows = await query('SELECT Awal FROM pos_kasawal WHERE Tgl = ? AND KdUser = ? LIMIT 1', [date, cashier]);
+    if (!openingRows.length) return res.status(409).json({ success: false, code: 'KAS_AWAL', message: 'Kas awal (uang laci) hari ini belum diisi.' });
     if (KdCust) {
       const memberRows = await query('SELECT KdAng, MASAAKTIF, GGantung, Plafon, Disc FROM anggota WHERE KdAng = ? LIMIT 1', [String(KdCust).trim()]);
       if (!memberRows.length || memberRows[0].MASAAKTIF === 'N') return res.status(400).json({ success: false, message: 'Anggota tidak ditemukan atau nonaktif.' });
@@ -819,7 +833,7 @@ app.post('/api/penjualan', async (req, res) => {
   const taxPercent = 0;
   if (!Number.isFinite(discountPercent) || discountPercent < 0 || discountPercent > 100 ||
       !Number.isFinite(taxPercent) || taxPercent < 0 || taxPercent > 100 ||
-      !['cash', 'edc', 'qris', 'credit'].includes(paymentMethod)) {
+      !['cash', 'edc', 'qris', 'transfer', 'credit'].includes(paymentMethod)) {
     return res.status(400).json({ success: false, message: 'Diskon, PPN, atau metode pembayaran tidak valid.' });
   }
 
@@ -943,8 +957,8 @@ app.post('/api/penjualan', async (req, res) => {
       }
     }
 
-    if (paymentMethod === 'edc' || paymentMethod === 'qris') {
-      const jenis = paymentMethod === 'qris' ? 'QRIS' : String(req.body.cardType || 'EDC').slice(0, 15);
+    if (paymentMethod === 'edc' || paymentMethod === 'qris' || paymentMethod === 'transfer') {
+      const jenis = paymentMethod === 'qris' ? 'QRIS' : paymentMethod === 'transfer' ? 'TRANSFER' : String(req.body.cardType || 'EDC').slice(0, 15);
       await query(`INSERT INTO kakredit (nofak, tglfak, kdkasir, GTotal, BCARD, Jenis, NAMA, NOMOR)
         VALUES (?, ?, ?, ?, 0, ?, ?, ?)`, [invoice, date, cashier, grandTotal, jenis, String(req.body.cardName || '').slice(0, 20), String(req.body.cardNumber || '').slice(0, 20)]);
       cardWritten = true;
@@ -1108,11 +1122,54 @@ app.get('/api/kasir', async (req, res) => {
   }
 });
 
+// Kas awal (uang laci) per kasir per hari; masuk ke saldo kasjual.Awal sehingga ikut rekonsiliasi setoran.
+app.get('/api/kas-awal', async (req, res) => {
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+    const Tgl = String(req.query.tgl || today);
+    const KdUser = hasManagerRole(req.user) ? String(req.query.kdUser || req.user.KdUser).trim() : req.user.KdUser;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(Tgl)) return res.status(400).json({ success: false, message: 'Tanggal tidak valid.' });
+    const rows = await query('SELECT Awal FROM pos_kasawal WHERE Tgl = ? AND KdUser = ? LIMIT 1', [Tgl, KdUser]);
+    const [sales] = await query("SELECT COUNT(*) AS n FROM jual WHERE tglfak = ? AND kdkasir = ? AND KOND = '1'", [Tgl, KdUser]);
+    res.json({ success: true, Tgl, KdUser, set: rows.length > 0, Awal: rows.length ? Number(rows[0].Awal) : 0, locked: Number(sales.n) > 0 });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Gagal mengambil kas awal: ' + err.message });
+  }
+});
+
+app.put('/api/kas-awal', async (req, res) => {
+  const manager = hasManagerRole(req.user);
+  const today = new Date().toISOString().slice(0, 10);
+  const Tgl = manager ? String(req.body.Tgl || today) : today;
+  const KdUser = manager ? String(req.body.KdUser || req.user.KdUser).trim() : req.user.KdUser;
+  const Uang = Number(req.body.Uang);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(Tgl) || !KdUser || KdUser.length > 5 || !Number.isFinite(Uang) || Uang < 0 || Uang > 999999999999) {
+    return res.status(400).json({ success: false, message: 'Kas awal harus berupa angka 0 atau lebih.' });
+  }
+  try {
+    const kunci = await query('SELECT KdUser FROM kunci WHERE KdUser = ? LIMIT 1', [KdUser]);
+    if (!kunci.length) return res.status(400).json({ success: false, message: 'Kode kasir tidak ditemukan.' });
+    if (!manager) {
+      const [sales] = await query("SELECT COUNT(*) AS n FROM jual WHERE tglfak = ? AND kdkasir = ? AND KOND = '1'", [Tgl, KdUser]);
+      if (Number(sales.n) > 0) return res.status(409).json({ success: false, message: 'Sudah ada transaksi hari ini. Kas awal hanya dapat diubah oleh admin.' });
+    }
+    const Awal = Math.round(Uang * 100) / 100;
+    await query('DELETE FROM pos_kasawal WHERE Tgl = ? AND KdUser = ?', [Tgl, KdUser]);
+    await query('INSERT INTO pos_kasawal (Tgl, KdUser, Awal, DicatatOleh, DicatatPada) VALUES (?, ?, ?, ?, NOW())', [Tgl, KdUser, Awal, req.user.KdUser]);
+    const cashRows = await query('SELECT Tgl FROM kasjual WHERE Tgl = ? AND KdUser = ? LIMIT 1', [Tgl, KdUser]);
+    if (cashRows.length) await query('UPDATE kasjual SET Awal = ? WHERE Tgl = ? AND KdUser = ?', [Awal, Tgl, KdUser]);
+    else await query('INSERT INTO kasjual (Tgl, KdUser, Awal, Masuk, Keluar, Laci, Batal) VALUES (?, ?, ?, 0, 0, 0, 0)', [Tgl, KdUser, Awal]);
+    res.json({ success: true, message: 'Kas awal tersimpan.', Awal });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Gagal menyimpan kas awal: ' + err.message });
+  }
+});
+
 app.get('/api/anggota', async (req, res) => {
   try {
-    const data = req.user.Role === 'kasir'
-      ? await query('SELECT KdAng, NmAng, Disc, JTempo, Plafon, GGantung, MASAAKTIF FROM anggota WHERE MASAAKTIF IS NULL OR MASAAKTIF <> ? ORDER BY NmAng ASC', ['N'])
-      : await query('SELECT KdAng, NmAng, AlAng, kota, Telp, CPerson, Email, Disc, JTempo, Plafon, GGantung, MASAAKTIF FROM anggota ORDER BY NmAng ASC');
+    const data = hasManagerRole(req.user)
+      ? await query('SELECT KdAng, NmAng, AlAng, kota, Telp, CPerson, Email, Disc, JTempo, Plafon, GGantung, MASAAKTIF FROM anggota ORDER BY NmAng ASC')
+      : await query('SELECT KdAng, NmAng, Disc, JTempo, Plafon, GGantung, MASAAKTIF FROM anggota WHERE MASAAKTIF IS NULL OR MASAAKTIF <> ? ORDER BY NmAng ASC', ['N']);
     res.json({ success: true, data });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Gagal mengambil anggota: ' + err.message });
@@ -1356,8 +1413,8 @@ app.post('/api/penjualan/batal', async (req, res) => {
 
 app.get('/api/piutang', async (req, res) => {
   try {
-    const ownerSql = req.user.Role === 'kasir' ? 'WHERE p.KdUser = ?' : '';
-    const params = req.user.Role === 'kasir' ? [req.user.KdUser] : [];
+    const ownerSql = !hasManagerRole(req.user) ? 'WHERE p.KdUser = ?' : '';
+    const params = !hasManagerRole(req.user) ? [req.user.KdUser] : [];
     const data = await query(`SELECT p.KdAng, a.NmAng, p.NoFak, MIN(p.Tgl) AS Tgl, SUM(p.Debit) AS Total,
       SUM(p.Kredit) AS Paid, SUM(p.Debit) - SUM(p.Kredit) AS Balance
       FROM pos_piutang p LEFT JOIN anggota a ON a.KdAng = p.KdAng ${ownerSql}
@@ -1600,6 +1657,35 @@ app.delete('/api/supplier/:kdSupp', async (req, res) => {
   }
 });
 
+// Logo nota disimpan sebagai file (data URL) agar tidak perlu mengubah skema database.
+const LOGO_FILE = path.join(__dirname, 'logo.dat');
+
+app.get('/api/logo', (req, res) => {
+  fs.readFile(LOGO_FILE, 'utf8', (err, data) => {
+    res.json({ success: true, data: err ? null : data });
+  });
+});
+
+app.put('/api/logo', (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  const dataUrl = String(req.body.dataUrl || '');
+  if (!/^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(dataUrl) || dataUrl.length > 90000) {
+    return res.status(400).json({ success: false, message: 'File logo tidak valid atau terlalu besar.' });
+  }
+  fs.writeFile(LOGO_FILE, dataUrl, 'utf8', err => {
+    if (err) return res.status(500).json({ success: false, message: 'Gagal menyimpan logo.' });
+    res.json({ success: true, message: 'Logo nota disimpan.' });
+  });
+});
+
+app.delete('/api/logo', (req, res) => {
+  if (!requireAdmin(req, res)) return;
+  fs.unlink(LOGO_FILE, err => {
+    if (err && err.code !== 'ENOENT') return res.status(500).json({ success: false, message: 'Gagal menghapus logo.' });
+    res.json({ success: true, message: 'Logo nota dihapus.' });
+  });
+});
+
 app.get('/api/pengaturan', async (req, res) => {
   try {
     const isManager = hasManagerRole(req.user);
@@ -1690,13 +1776,16 @@ app.post('/api/pembelian', async (req, res) => {
       const qty = Number(item.Qty);
       const unitCost = Number(item.Hbeli);
       const discount = Number(item.Disc || 0);
+      const hasSellPrice = item.Hjual !== undefined && item.Hjual !== null && item.Hjual !== '';
+      const sellPrice = hasSellPrice ? Number(item.Hjual) : null;
       if (!kdBar || !Number.isFinite(qty) || qty <= 0 || qty > 9999.999 ||
           !Number.isFinite(unitCost) || unitCost < 0 ||
-          !Number.isFinite(discount) || discount < 0 || discount > 100) {
-        return res.status(400).json({ success: false, message: 'Kode barang, jumlah, harga beli, atau diskon item tidak valid.' });
+          !Number.isFinite(discount) || discount < 0 || discount > 100 ||
+          (hasSellPrice && (!Number.isFinite(sellPrice) || sellPrice < 0))) {
+        return res.status(400).json({ success: false, message: 'Kode barang, jumlah, harga beli, harga jual, atau diskon item tidak valid.' });
       }
       if (requested.has(kdBar)) return res.status(400).json({ success: false, message: `Barang ${kdBar} muncul lebih dari sekali.` });
-      requested.set(kdBar, { qty, unitCost, discount });
+      requested.set(kdBar, { qty, unitCost, discount, sellPrice });
     }
 
     const products = [];
@@ -1736,8 +1825,12 @@ app.post('/api/pembelian', async (req, res) => {
       await query(`INSERT INTO dbeli (NoFak, TglFak, KdBar, barcode, NmBar, Satuan, Qty, Qtyz, Hbeli, Disc, Jumlah)
         VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?)`,
       [invoice, date, item.KdBar, item.Barcode || '', item.Nmbar, item.Satkecil || 'PCS', item.qty, item.unitCost, item.discount, item.amount]);
-      await query('UPDATE stock SET StMasuk = IFNULL(StMasuk, 0) + ?, HBeli = ?, HPokok = ? WHERE KdBar = ?',
-        [item.qty, item.unitCost * (1 - item.discount / 100), item.unitCost * (1 - item.discount / 100), item.KdBar]);
+      const netCost = item.unitCost * (1 - item.discount / 100);
+      if (item.sellPrice === null) {
+        await query('UPDATE stock SET StMasuk = IFNULL(StMasuk, 0) + ?, HBeli = ?, HPokok = ? WHERE KdBar = ?', [item.qty, netCost, netCost, item.KdBar]);
+      } else {
+        await query('UPDATE stock SET StMasuk = IFNULL(StMasuk, 0) + ?, HBeli = ?, HPokok = ?, HJual = ? WHERE KdBar = ?', [item.qty, netCost, netCost, item.sellPrice, item.KdBar]);
+      }
       modifiedStock.push(item);
       await query("INSERT INTO kstock (KdBar, Tgl, NoBukti, Qty, Status, Ket, kdGudang) VALUES (?, ?, ?, ?, 'I', 'BELI', '0')",
         [item.KdBar, date, invoice, item.qty]);
@@ -1760,7 +1853,7 @@ app.post('/api/pembelian', async (req, res) => {
         query('DELETE FROM kstock WHERE Tgl = ? AND NoBukti = ? AND Ket = ?', [date, invoice, 'BELI'])
       ];
       if (cashWritten) cleanup.push(query('UPDATE kasjual SET Keluar = Keluar - ? WHERE Tgl = ? AND KdUser = ?', [payment, date, req.user.KdUser]));
-      modifiedStock.forEach(item => cleanup.push(query('UPDATE stock SET StMasuk = StMasuk - ?, HBeli = ?, HPokok = ? WHERE KdBar = ?', [item.qty, item.HBeli || 0, item.HPokok || 0, item.KdBar])));
+      modifiedStock.forEach(item => cleanup.push(query('UPDATE stock SET StMasuk = StMasuk - ?, HBeli = ?, HPokok = ?, HJual = ? WHERE KdBar = ?', [item.qty, item.HBeli || 0, item.HPokok || 0, item.HJual || 0, item.KdBar])));
       await Promise.all(cleanup.map(operation => operation.catch(cleanupError => console.error('Gagal membersihkan pembelian parsial:', cleanupError.message))));
     }
     res.status(500).json({ success: false, message: 'Gagal menyimpan pembelian: ' + err.message });

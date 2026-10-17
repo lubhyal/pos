@@ -1,6 +1,10 @@
 <div class="container-fluid px-4 d-none" id="kasirView">
     <div class="row g-3">
       <div class="col-lg-8">
+        <div class="card shadow-sm mb-3"><div class="card-body py-2 d-flex flex-wrap align-items-center gap-2">
+          <i class="bi bi-cash-stack text-success"></i><span class="small text-body-secondary">Kas awal hari ini</span><strong id="kasAwalValue">-</strong>
+          <button type="button" tabindex="-1" class="btn btn-sm btn-outline-secondary ms-auto" onclick="ensureKasAwal(true)">Ubah <span class="text-body-secondary">(F9)</span></button>
+        </div></div>
         <div class="card shadow-sm mb-3">
           <div class="card-body">
             <label for="searchProduct" class="form-label fw-semibold fs-5">Cari atau scan barang</label>
@@ -36,19 +40,33 @@
             <label class="form-label small">Metode pembayaran</label>
             <input type="hidden" id="paymentMethod" value="cash">
             <div class="row g-2 mb-3" id="paymentMethodGroup">
-              <div class="col-6"><button type="button" class="btn btn-outline-secondary w-100 py-3 active" data-method="cash" onclick="setPaymentMethod('cash')">Tunai<div class="small opacity-75">Alt+1</div></button></div>
-              <div class="col-6"><button type="button" class="btn btn-outline-secondary w-100 py-3" data-method="qris" onclick="setPaymentMethod('qris')">QRIS<div class="small opacity-75">Alt+2</div></button></div>
-              <div class="col-6"><button type="button" class="btn btn-outline-secondary w-100 py-3" data-method="edc" onclick="setPaymentMethod('edc')">EDC<div class="small opacity-75">Alt+3</div></button></div>
-              <div class="col-6"><button type="button" class="btn btn-outline-secondary w-100 py-3" data-method="credit" onclick="setPaymentMethod('credit')">Kredit<div class="small opacity-75">Alt+4</div></button></div>
+              <div class="col-6"><button type="button" tabindex="-1" class="btn btn-outline-secondary w-100 py-2 active" data-method="cash" onclick="setPaymentMethod('cash')"><i class="bi bi-cash-coin me-1"></i>Tunai<div class="small opacity-75">Alt+1</div></button></div>
+              <div class="col-6"><button type="button" tabindex="-1" class="btn btn-outline-secondary w-100 py-2" data-method="qris" onclick="setPaymentMethod('qris')"><i class="bi bi-qr-code me-1"></i>QRIS<div class="small opacity-75">Alt+2</div></button></div>
+              <div class="col-6"><button type="button" tabindex="-1" class="btn btn-outline-secondary w-100 py-2" data-method="transfer" onclick="setPaymentMethod('transfer')"><i class="bi bi-bank me-1"></i>Transfer<div class="small opacity-75">Alt+3</div></button></div>
+              <div class="col-6"><button type="button" tabindex="-1" class="btn btn-outline-secondary w-100 py-2" data-method="edc" onclick="setPaymentMethod('edc')"><i class="bi bi-credit-card-2-front me-1"></i>EDC<div class="small opacity-75">Alt+4</div></button></div>
             </div>
 
-            <label for="cashReceived" id="cashReceivedLabel" class="form-label small">Uang diterima</label>
-            <input id="cashReceived" type="number" class="form-control form-control-lg fs-3 mb-3" min="0" step="1" value="0">
-            <div class="d-flex justify-content-between align-items-center mb-3 fs-4"><span id="saleChangeLabel">Kembalian</span><strong id="saleChange">Rp0</strong></div>
-            <button class="btn btn-success btn-lg w-100 fs-4" id="btnCompleteSale" onclick="completeSale()"><i class="bi bi-check2-circle me-1"></i> Selesaikan Transaksi</button>
-            <button class="btn btn-link btn-sm w-100 mt-2 text-danger" onclick="clearCart()">Kosongkan keranjang</button>
+            <div id="cashBlock">
+              <label for="cashReceived" id="cashReceivedLabel" class="form-label small">Uang diterima <span class="text-body-secondary">(Enter = uang pas)</span></label>
+              <input id="cashReceived" type="number" class="form-control form-control-lg fs-3 mb-3" min="0" step="1" value="0" autocomplete="off">
+              <div class="d-flex justify-content-between align-items-center mb-3 fs-4"><span id="saleChangeLabel">Kembalian</span><strong id="saleChange">Rp0</strong></div>
+            </div>
+            <div id="saleDone" class="alert alert-success d-none text-center py-2 mb-3" role="status"></div>
+            <button class="btn btn-success btn-lg w-100 fs-4" id="btnCompleteSale" tabindex="-1" onclick="completeSale()"><i class="bi bi-check2-circle me-1"></i> Selesaikan Transaksi</button>
+            <button class="btn btn-link btn-sm w-100 mt-2 text-danger" tabindex="-1" onclick="clearCart()">Kosongkan keranjang <span class="text-body-secondary">(Ctrl+Del)</span></button>
           </div>
         </div>
       </div>
     </div>
+    <div class="card shadow-sm mt-3"><div class="card-body py-2 small text-body-secondary d-flex flex-wrap gap-x-3 gap-3" id="kasirHints">
+      <span><kbd>Scan</kbd>/ketik + <kbd>Enter</kbd> tambah barang</span>
+      <span><kbd>↑</kbd><kbd>↓</kbd> pilih baris / hasil</span>
+      <span><kbd>+</kbd><kbd>-</kbd> ubah qty</span>
+      <span><kbd>Del</kbd> hapus baris</span>
+      <span><kbd>Enter</kbd> (kolom kosong) bayar</span>
+      <span><kbd>Alt+1-4</kbd> metode</span>
+      <span><kbd>F2</kbd> tunda</span>
+      <span><kbd>F4</kbd> panggil tertunda</span>
+      <span><kbd>Esc</kbd> kembali ke scan</span>
+    </div></div>
   </div>
