@@ -201,25 +201,6 @@
     #cartBody tr.cart-selected > td { background: rgba(250, 204, 21, .25) !important; box-shadow: inset 0 0 0 9999px transparent; }
     #cartBody tr.cart-selected > td:first-child { border-left: 4px solid #16a34a; }
     kbd { padding: .1rem .4rem; margin-inline: .1rem; }
-    @media print {
-      @page { size: 80mm auto; margin: 2mm; }
-      html, body { height: auto !important; overflow: visible !important; background: #fff !important; }
-      body * { visibility: hidden !important; }
-      #receiptPrint, #receiptPrint * { visibility: visible !important; }
-      #receiptPrint { display: block !important; position: absolute; left: 0; top: 0; width: 72mm; color: #000 !important; background: #fff !important;       font: 700 9.5pt/1.25 Arial, 'Helvetica Neue', sans-serif; -webkit-text-stroke: .25px #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            #receiptPrint * { font-weight: 700 !important; color: #000 !important; }
-            #receiptPrint .rc-c { text-align: center; }
-            #receiptPrint .rc-logo { display: block; margin: 0 auto 1mm; max-width: 45mm; max-height: 18mm; image-rendering: pixelated; }
-            #receiptPrint .rc-name { font-size: 12pt; letter-spacing: .3px; }
-            #receiptPrint .rc-sm { font-size: 8.5pt; }
-      #receiptPrint .rc-tag { margin: 1mm 0; padding: .5mm 0; border: 1px solid #000; text-align: center; font-weight: 700; letter-spacing: 1px; }
-      #receiptPrint .rc-hr { border-top: 2px dashed #000; margin: 1.5mm 0; }
-      #receiptPrint .rc-row { display: flex; justify-content: space-between; gap: 2mm; }
-      #receiptPrint .rc-row > span:last-child { text-align: right; white-space: nowrap; }
-      #receiptPrint .rc-item { margin-bottom: .8mm; }
-      #receiptPrint .rc-iname { font-weight: 700; word-break: break-word; }
-      #receiptPrint .rc-total { font-size: 12.5pt; margin: .5mm 0; }
-    }
   </style>
 </head>
 <body>
@@ -259,6 +240,14 @@
           <span class="sidebar-heading">Utama</span>
           <button class="nav-link active" id="btnShowDashboard" onclick="showView('dashboardView'); loadDashboard()"><i class="bi bi-speedometer2"></i> Dashboard</button>
 
+          <span class="sidebar-heading d-none" id="empSidebarHeading">Karyawan</span>
+          <button class="nav-link emp-only d-none" id="btnEmpDash" onclick="showView('empDashView')"><i class="bi bi-speedometer2"></i> Dashboard</button>
+          <button class="nav-link emp-only d-none" id="btnEmpAbsen" onclick="showView('absenView')"><i class="bi bi-camera"></i> Absen</button>
+          <button class="nav-link emp-only d-none" id="btnEmpShift" onclick="showView('shiftView')"><i class="bi bi-calendar-week"></i> Shift Kerja</button>
+          <button class="nav-link emp-only d-none" id="btnEmpSlip" onclick="showView('slipView')"><i class="bi bi-file-earmark-text"></i> Slip Gaji</button>
+          <button class="nav-link emp-only d-none" id="btnEmpKinerja" onclick="showView('kinerjaView')"><i class="bi bi-activity"></i> Kinerja</button>
+          <button class="nav-link emp-only d-none" id="btnEmpHadir" onclick="showView('hadirView')"><i class="bi bi-person-check"></i> Status Kehadiran</button>
+
           <span class="sidebar-heading">Gudang & Stok</span>
           <button class="nav-link" id="btnShowStock" onclick="showView('stockView')"><i class="bi bi-boxes"></i> Stok Barang</button>
           <button class="nav-link" id="btnShowPurchase" onclick="showView('purchaseView')"><i class="bi bi-truck"></i> Pembelian</button>
@@ -276,6 +265,8 @@
 
           <span class="sidebar-heading d-none" id="adminSidebarHeading">Administrasi</span>
           <button class="nav-link d-none" id="btnManageUsers" onclick="openUserManagement()"><i class="bi bi-people"></i> Manajemen User</button>
+          <button class="nav-link d-none" id="btnShiftAdmin" onclick="showView('shiftAdminView')"><i class="bi bi-calendar-week"></i> Pengaturan Shift</button>
+          <button class="nav-link d-none" id="btnPayroll" onclick="showView('payrollView')"><i class="bi bi-cash-coin"></i> Penggajian & Absensi</button>
           <button class="nav-link d-none" id="btnMasterData" onclick="showView('masterView'); loadMasterData()"><i class="bi bi-people"></i> Data Master</button>
           <button class="nav-link d-none" id="btnSettings" onclick="showView('settingsView'); loadSettings()"><i class="bi bi-gear"></i> Pengaturan</button>
         </div>
@@ -397,9 +388,10 @@
       <div class="modal-body"><div class="row g-3">
         <div class="col-5"><label for="managedUserCode" class="form-label small">Kode (maks. 5)</label><input id="managedUserCode" class="form-control" maxlength="5" required></div>
         <div class="col-7"><label for="managedUserName" class="form-label small">Nama</label><input id="managedUserName" class="form-control" maxlength="20" required></div>
-        <div class="col-6"><label for="managedUserRole" class="form-label small">Role</label><select id="managedUserRole" class="form-select"><option value="kasir">Kasir</option><option value="gudang">Admin Gudang</option><option value="bos">Bos</option><option value="admin">Admin</option></select></div>
+        <div class="col-6"><label for="managedUserRole" class="form-label small">Role (hak akses menu)</label><select id="managedUserRole" class="form-select"><option value="kasir">Kasir</option><option value="gudang">Admin Gudang</option><option value="bos">Bos</option><option value="admin">Admin</option><option value="karyawan">Karyawan (hanya absen)</option></select></div>
         <div class="col-6"><label for="managedUserActive" class="form-label small">Status</label><select id="managedUserActive" class="form-select"><option value="Y">Aktif</option><option value="N">Nonaktif</option></select></div>
         <div class="col-12 d-none" id="managedUserCashierWrap"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="managedUserCanCashier"><label class="form-check-label" for="managedUserCanCashier">Boleh juga menjadi kasir <span class="text-body-secondary small">(Admin Gudang dapat membuka menu Kasir, Piutang, Retur Jual, dan melapor setoran)</span></label></div></div>
+        <div class="col-12"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="managedUserIsKaryawan"><label class="form-check-label" for="managedUserIsKaryawan">Ikut absensi &amp; penggajian <span class="text-body-secondary small">(satu akun untuk semua: menu Absen, Shift, Slip Gaji, Kinerja, dan Kehadiran muncul di akun ini, dan user masuk daftar gaji)</span></label></div></div>
         <div class="col-12"><label for="managedUserPassword" class="form-label small" id="managedUserPasswordLabel">Password (min. 3 karakter)</label><input id="managedUserPassword" type="password" class="form-control" minlength="3" autocomplete="new-password"></div>
       </div></div>
       <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button id="saveManagedUser" type="submit" class="btn btn-primary">Simpan</button></div>
@@ -423,9 +415,14 @@
     <div class="modal-body">
       <div class="small text-body-secondary mb-2" id="barcodeTitle"></div>
       <div id="barcodePreview" class="bl-preview"></div>
+      <label class="form-label small mt-2" for="barcodeSize">Ukuran kertas</label>
+      <select id="barcodeSize" class="form-select form-select-sm" onchange="refreshBarcodePreview()">
+        <option value="58" selected>Printer thermal 58mm (label 48 x 26 mm)</option>
+        <option value="40">Label 40 x 20 mm</option>
+      </select>
       <label class="form-label small mt-2" for="barcodeCopies">Jumlah label</label>
       <input id="barcodeCopies" type="number" min="1" max="500" value="1" class="form-control form-control-sm">
-      <div class="form-text">Ukuran label 40 &times; 20 mm (thermal). Pada dialog cetak pilih ukuran kertas 40 &times; 20 mm, margin none, skala 100%.</div>
+      <div class="form-text">Ukuran kertas diatur otomatis oleh aplikasi. Pada dialog cetak pilih printer thermal Anda, margin None, skala 100% (jangan "Fit to page").</div>
     </div>
     <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Tutup</button><button type="button" class="btn btn-primary" onclick="printBarcodeLabels()"><i class="bi bi-printer me-1"></i>Cetak</button></div>
   </div></div></div>
@@ -739,6 +736,8 @@
     async function loadMenuViews() {
       const menuPages = [
         'master-data.html',
+        'karyawan.html',
+        'hr-admin.html',
         'dashboard.html',
         'users.html',
         'settings.html',
@@ -839,6 +838,25 @@
       document.getElementById('appShell').classList.remove('d-none');
       document.getElementById('currentUserLabel').textContent = `${user.Nmuser} (${user.KdUser})`;
       const manager = ['admin', 'bos'].includes(user.Role);
+      const isEmployee = user.Role === 'karyawan';
+      const isStaff = isEmployee || user.IsKaryawan === 'Y';
+      document.querySelectorAll('#sidebarNav .nav-link.emp-only').forEach(b => b.classList.toggle('d-none', !isStaff));
+      document.getElementById('empSidebarHeading').classList.toggle('d-none', !isStaff);
+      document.getElementById('btnShiftAdmin').classList.toggle('d-none', !manager);
+      document.getElementById('btnPayroll').classList.toggle('d-none', !manager);
+      if (!isEmployee) {
+        document.querySelectorAll('#sidebarNav .sidebar-heading:not(#empSidebarHeading):not(#adminSidebarHeading)').forEach(h => h.classList.remove('d-none'));
+        document.getElementById('btnShowStock').classList.remove('d-none');
+      }
+      if (isEmployee) {
+        // Karyawan hanya melihat menu karyawan; semua menu dan judul lain disembunyikan.
+        document.querySelectorAll('#sidebarNav .nav-link:not(.emp-only)').forEach(b => b.classList.add('d-none'));
+        document.querySelectorAll('#sidebarNav .sidebar-heading:not(#empSidebarHeading)').forEach(h => h.classList.add('d-none'));
+        document.getElementById('btnAddProduct').classList.add('d-none');
+        loadBusinessSettings();
+        showView('empDashView');
+        return;
+      }
       const cashier = ['admin', 'bos', 'kasir'].includes(user.Role) || (user.Role === 'gudang' && user.CanCashier === 'Y');
       const warehouse = ['admin', 'bos', 'gudang'].includes(user.Role);
       document.getElementById('btnManageUsers').classList.toggle('d-none', !manager);
@@ -929,8 +947,8 @@
 
     function escapeHtml(v) { return String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); }
     let managedUsers = [];
-    const roleLabels = { admin: 'Admin', bos: 'Bos', kasir: 'Kasir', gudang: 'Admin Gudang' };
-    const roleBadge = { admin: 'danger', bos: 'warning', kasir: 'primary', gudang: 'info' };
+    const roleLabels = { admin: 'Admin', bos: 'Bos', kasir: 'Kasir', gudang: 'Admin Gudang', karyawan: 'Karyawan' };
+    const roleBadge = { admin: 'danger', bos: 'warning', kasir: 'primary', gudang: 'info', karyawan: 'success' };
 
     async function openUserManagement() {
       if (!currentUser || !['admin', 'bos'].includes(currentUser.Role)) return;
@@ -953,7 +971,7 @@
     function renderManagedUsers() {
       const needle = document.getElementById('userSearch').value.trim().toLowerCase();
       const role = document.getElementById('userRoleFilter').value;
-      const list = managedUsers.filter(u => (!role || u.Role === role) && (!needle || `${u.KdUser} ${u.Nmuser}`.toLowerCase().includes(needle)));
+      const list = managedUsers.filter(u => (!role || (role === 'staff' ? (u.IsKaryawan === 'Y' || u.Role === 'karyawan') : u.Role === role)) && (!needle || `${u.KdUser} ${u.Nmuser}`.toLowerCase().includes(needle)));
       document.getElementById('userStats').innerHTML = [
         ['bi-people', 'primary', 'Total user', managedUsers.length],
         ['bi-check-circle', 'success', 'Aktif', managedUsers.filter(u => u.IsActive === 'Y').length],
@@ -970,6 +988,7 @@
         roleCell.innerHTML = `<span class="badge text-bg-${roleBadge[user.Role] || 'secondary'}"></span>`;
         roleCell.firstChild.textContent = roleLabels[user.Role] || user.Role;
         if (user.Role === 'gudang' && user.CanCashier === 'Y') roleCell.insertAdjacentHTML('beforeend', ' <span class="badge text-bg-primary">+ Kasir</span>');
+        if (user.Role !== 'karyawan' && user.IsKaryawan === 'Y') roleCell.insertAdjacentHTML('beforeend', ' <span class="badge text-bg-success">+ Absensi</span>');
         const status = row.insertCell();
         status.innerHTML = `<span class="badge ${user.IsActive === 'Y' ? 'text-bg-success' : 'text-bg-secondary'}">${user.IsActive === 'Y' ? 'Aktif' : 'Nonaktif'}</span>`;
         const actions = row.insertCell(); actions.className = 'text-end text-nowrap';
@@ -996,6 +1015,7 @@
       document.getElementById('managedUserRole').value = user ? user.Role : 'kasir';
       document.getElementById('managedUserActive').value = user ? user.IsActive : 'Y';
       document.getElementById('managedUserCanCashier').checked = Boolean(user && user.CanCashier === 'Y');
+      document.getElementById('managedUserIsKaryawan').checked = Boolean(user && (user.IsKaryawan === 'Y' || user.Role === 'karyawan'));
       syncCashierToggle();
       document.getElementById('managedUserPassword').required = !user;
       document.getElementById('managedUserPasswordLabel').textContent = user ? 'Password baru (kosongkan jika tidak diubah)' : 'Password (min. 3 karakter)';
@@ -1014,7 +1034,11 @@
     }
 
     function syncCashierToggle() {
-      document.getElementById('managedUserCashierWrap').classList.toggle('d-none', document.getElementById('managedUserRole').value !== 'gudang');
+      const role = document.getElementById('managedUserRole').value;
+      document.getElementById('managedUserCashierWrap').classList.toggle('d-none', role !== 'gudang');
+      const staff = document.getElementById('managedUserIsKaryawan');
+      if (role === 'karyawan') staff.checked = true;
+      staff.disabled = role === 'karyawan';
     }
 
     async function saveManagedUser(event) {
@@ -1024,6 +1048,7 @@
         Nmuser: document.getElementById('managedUserName').value.trim(),
         Role: document.getElementById('managedUserRole').value,
         CanCashier: document.getElementById('managedUserCanCashier').checked ? 'Y' : 'N',
+        IsKaryawan: document.getElementById('managedUserIsKaryawan').checked ? 'Y' : 'N',
         IsActive: document.getElementById('managedUserActive').value,
         password: document.getElementById('managedUserPassword').value
       };
@@ -1097,7 +1122,9 @@
       dashboardView: 'btnShowDashboard', stockView: 'btnShowStock', kasirView: 'btnShowKasir', piutangView: 'btnShowPiutang',
       purchaseView: 'btnShowPurchase', opnameView: 'btnShowOpname', fullReportView: 'btnShowReport',
       cashierReportView: 'btnShowCashierReport', masterView: 'btnMasterData', usersView: 'btnManageUsers', settingsView: 'btnSettings',
-      purchaseReturnView: 'btnShowPurchaseReturn', salesReturnView: 'btnShowSalesReturn'
+      purchaseReturnView: 'btnShowPurchaseReturn', salesReturnView: 'btnShowSalesReturn',
+      empDashView: 'btnEmpDash', absenView: 'btnEmpAbsen', shiftView: 'btnEmpShift', slipView: 'btnEmpSlip', kinerjaView: 'btnEmpKinerja', hadirView: 'btnEmpHadir',
+      shiftAdminView: 'btnShiftAdmin', payrollView: 'btnPayroll'
     };
 
     function chartTextColor() { return document.documentElement.getAttribute('data-bs-theme') === 'dark' ? '#cbd5e1' : '#475569'; }
@@ -2928,9 +2955,26 @@
       if (r.payments && r.payments.length) { box.append(hr()); r.payments.forEach(([l, v]) => box.append(row(l, v))); }
       const footer = (r.footer || []).filter(Boolean);
       if (footer.length) { box.append(hr()); footer.forEach(t => box.append(el('rc-c rc-sm', t))); }
-      const logoImg = box.querySelector('img');
-      (logoImg && logoImg.decode ? logoImg.decode().catch(() => {}) : Promise.resolve()).then(() => window.print());
+      const html = box.innerHTML;
+      box.replaceChildren();
+      printDocument({ html, css: RECEIPT_CSS, widthMm: 58, extraMm: 8 });
     }
+
+    // Area cetak bersih printer thermal 58mm = 48mm; halaman 58mm tanpa margin, konten di tengah.
+    const RECEIPT_CSS = `#printWrap{width:48mm;margin:0 auto;padding:1mm 0;color:#000;background:#fff;font:700 8.5pt/1.25 Arial,'Helvetica Neue',sans-serif;-webkit-text-stroke:.2px #000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+#printWrap *{font-weight:700;color:#000}
+.rc-c{text-align:center}
+.rc-logo{display:block;margin:0 auto 1mm;max-width:40mm;max-height:16mm;image-rendering:pixelated}
+.rc-name{font-size:11pt;letter-spacing:.2px}
+.rc-sm{font-size:7.5pt}
+.rc-tag{margin:1mm 0;padding:.5mm 0;border:1px solid #000;text-align:center;letter-spacing:1px}
+.rc-hr{border-top:2px dashed #000;margin:1.5mm 0}
+.rc-row{display:flex;justify-content:space-between;gap:1.5mm}
+.rc-row>span:first-child{min-width:0;word-break:break-word}
+.rc-row>span:last-child{text-align:right;white-space:nowrap}
+.rc-item{margin-bottom:.8mm}
+.rc-iname{word-break:break-word}
+.rc-total{font-size:11pt;margin:.5mm 0}`;
 
     function receiptFooters() { return [businessSettings.FootJual, businessSettings.FootJual2, businessSettings.FootJual3]; }
     function receiptDate(dateText, timeText) {
@@ -2981,13 +3025,19 @@
     }
 
     // ===== Print barcode (label thermal 40x20 mm) =====
-    const BARCODE_LABEL_CSS = `.bl{box-sizing:border-box;width:40mm;height:20mm;padding:1mm 1.5mm;overflow:hidden;background:#fff;color:#000;font-family:Arial,Helvetica,sans-serif;display:flex;flex-direction:column;justify-content:space-between;page-break-after:always;break-after:page}
+    const BARCODE_LABEL_CSS = `.bl{box-sizing:border-box;padding:1mm 1.5mm;overflow:hidden;background:#fff;color:#000;font-family:Arial,Helvetica,sans-serif;display:flex;flex-direction:column;justify-content:space-between;margin:0 auto;page-break-after:always;break-after:page;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .bl:last-child{page-break-after:auto;break-after:auto}
 .bl-name{font-size:6.5pt;font-weight:700;line-height:1.1;max-height:2.2em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;text-align:center}
 .bl-bars{height:8mm;width:100%;display:block}
 .bl-foot{display:flex;justify-content:space-between;align-items:baseline;gap:1mm;line-height:1;flex-wrap:nowrap}
 .bl-num{font-size:5.5pt;font-family:'Courier New',monospace;overflow:hidden;white-space:nowrap}
-.bl-price{font-size:8.5pt;font-weight:700;white-space:nowrap}`;
+.bl-price{font-size:8.5pt;font-weight:700;white-space:nowrap}
+.bl.s58 .bl-name{font-size:8.5pt}
+.bl.s58 .bl-bars{height:11mm}
+.bl.s58 .bl-num{font-size:7.5pt}
+.bl.s58 .bl-price{font-size:11pt}`;
+    const BARCODE_SIZES = { '58': { page: 58, label: 48, height: 26, cls: 's58' }, '40': { page: 40, label: 40, height: 20, cls: 's40' } };
+    function barcodeSizeKey() { return document.getElementById('barcodeSize').value === '40' ? '40' : '58'; }
     let barcodeItem = null;
 
     function barcodeValueOf(item) { return String(item.Barcode || '').trim() || String(item.KdBar); }
@@ -3007,9 +3057,10 @@
       return svg.outerHTML;
     }
 
-    function barcodeLabelHtml(item) {
+    function barcodeLabelHtml(item, sizeKey = '58') {
+      const size = BARCODE_SIZES[sizeKey];
       const value = barcodeValueOf(item);
-      return `<div class="bl"><div class="bl-name">${escapeHtml(item.Nmbar)}</div>${barcodeSvg(value)}<div class="bl-foot"><span class="bl-num">${escapeHtml(value)}</span><span class="bl-price">${escapeHtml(formatRupiah(item.HJual))}</span></div></div>`;
+      return `<div class="bl ${size.cls}" style="width:${size.label}mm;height:${size.height}mm"><div class="bl-name">${escapeHtml(item.Nmbar)}</div>${barcodeSvg(value)}<div class="bl-foot"><span class="bl-num">${escapeHtml(value)}</span><span class="bl-price">${escapeHtml(formatRupiah(item.HJual))}</span></div></div>`;
     }
 
     function openBarcodeModal(kdBar) {
@@ -3021,23 +3072,51 @@
       const preview = document.getElementById('barcodePreview');
       try {
         if (!document.getElementById('blStyle')) { const st = document.createElement('style'); st.id = 'blStyle'; st.textContent = BARCODE_LABEL_CSS; document.head.appendChild(st); }
-        preview.innerHTML = barcodeLabelHtml(item);
+        preview.innerHTML = barcodeLabelHtml(item, barcodeSizeKey());
       } catch (err) { preview.textContent = err.message; }
       bootstrap.Modal.getOrCreateInstance(document.getElementById('modalBarcode')).show();
+    }
+
+    function refreshBarcodePreview() {
+      if (!barcodeItem) return;
+      const preview = document.getElementById('barcodePreview');
+      try { preview.innerHTML = barcodeLabelHtml(barcodeItem, barcodeSizeKey()); } catch (err) { preview.textContent = err.message; }
+    }
+
+    // Cetak lewat iframe terpisah yang berisi hanya konten cetak. Tinggi halaman diukur dari konten,
+    // sehingga printer thermal tidak mengeluarkan kertas kosong yang panjang.
+    function printDocument({ html, css, widthMm, heightMm, extraMm = 0 }) {
+      return new Promise(resolve => {
+        const frame = document.createElement('iframe');
+        frame.setAttribute('aria-hidden', 'true');
+        frame.style.cssText = `position:fixed;left:-10000px;top:0;width:${widthMm}mm;height:400mm;border:0`;
+        document.body.appendChild(frame);
+        const doc = frame.contentWindow.document;
+        doc.open();
+        doc.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Cetak</title><style id="pageRule"></style><style>html,body{margin:0;padding:0;background:#fff}*{box-sizing:border-box}${css}</style></head><body><div id="printWrap">${html}</div></body></html>`);
+        doc.close();
+        setTimeout(async () => {
+          await Promise.all([...doc.images].map(img => (img.decode ? img.decode().catch(() => {}) : Promise.resolve())));
+          const px = doc.getElementById('printWrap').getBoundingClientRect().height;
+          const height = heightMm || Math.ceil(px * 25.4 / 96) + extraMm;
+          doc.getElementById('pageRule').textContent = `@page{size:${widthMm}mm ${height}mm;margin:0}`;
+          frame.contentWindow.focus();
+          frame.contentWindow.print();
+          setTimeout(() => frame.remove(), 60000);
+          resolve();
+        }, 350);
+      });
     }
 
     function printBarcodeLabels() {
       if (!barcodeItem) return;
       const copies = Math.min(500, Math.max(1, parseInt(document.getElementById('barcodeCopies').value, 10) || 1));
+      const sizeKey = barcodeSizeKey();
+      const size = BARCODE_SIZES[sizeKey];
       let label;
-      try { label = barcodeLabelHtml(barcodeItem); } catch (err) { return alert(err.message); }
-      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Barcode</title><style>@page{size:40mm 20mm;margin:0}html,body{margin:0;padding:0;background:#fff}${BARCODE_LABEL_CSS}</style></head><body>${label.repeat(copies)}</body></html>`;
-      const frame = document.createElement('iframe');
-      frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
-      document.body.appendChild(frame);
-      const doc = frame.contentWindow.document;
-      doc.open(); doc.write(html); doc.close();
-      setTimeout(() => { frame.contentWindow.focus(); frame.contentWindow.print(); setTimeout(() => frame.remove(), 60000); }, 300);
+      try { label = barcodeLabelHtml(barcodeItem, sizeKey); } catch (err) { return alert(err.message); }
+      // Satu label = satu halaman; tinggi halaman tetap sama dengan tinggi label.
+      printDocument({ html: label.repeat(copies), css: BARCODE_LABEL_CSS, widthMm: size.page, heightMm: size.height });
     }
 
     // Beri label kolom pada semua tabel agar tampil sebagai kartu di HP
@@ -3473,5 +3552,6 @@
       }
     });
   </script>
+  <script src="/hr.js"></script>
 </body>
 </html>

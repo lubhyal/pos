@@ -1,0 +1,118 @@
+<div class="container-fluid px-4 d-none" id="shiftAdminView">
+  <div class="row g-3">
+    <div class="col-xl-4">
+      <div class="card shadow-sm"><div class="card-header"><i class="bi bi-calendar-plus me-1"></i> Atur &amp; Bagikan Shift</div>
+        <form class="card-body" id="shiftForm" autocomplete="off">
+          <label class="form-label small">Karyawan</label>
+          <div class="border rounded p-2 mb-1" style="max-height:160px;overflow:auto" id="shiftUsers"><span class="text-body-secondary small">Memuat...</span></div>
+          <div class="mb-3 small"><a href="#" onclick="toggleAllShiftUsers(true);return false">Pilih semua</a> · <a href="#" onclick="toggleAllShiftUsers(false);return false">Kosongkan</a></div>
+          <div class="row g-2 mb-3">
+            <div class="col-6"><label class="form-label small" for="shiftDari">Dari tanggal</label><input type="date" id="shiftDari" class="form-control form-control-sm" required></div>
+            <div class="col-6"><label class="form-label small" for="shiftSampai">Sampai tanggal</label><input type="date" id="shiftSampai" class="form-control form-control-sm" required></div>
+          </div>
+          <label class="form-label small">Hari kerja</label>
+          <div class="d-flex flex-wrap gap-2 mb-3" id="shiftDays"></div>
+          <label class="form-label small">Preset shift</label>
+          <div class="d-flex flex-wrap gap-2 mb-2">
+            <button type="button" class="btn btn-sm btn-outline-success" onclick="applyShiftPreset('Pagi','07:00','18:00')">Pagi 07-18 (11 jam)</button>
+            <button type="button" class="btn btn-sm btn-outline-warning" onclick="applyShiftPreset('Siang','12:00','23:00')">Siang 12-23 (11 jam)</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="applyShiftPreset('Malam','20:00','06:00')">Malam 20-06 (10 jam)</button>
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-4"><label class="form-label small" for="shiftNama">Nama shift</label><input id="shiftNama" class="form-control form-control-sm" maxlength="20" value="Pagi" oninput="syncShiftEnd()"></div>
+            <div class="col-4"><label class="form-label small" for="shiftMulai">Masuk</label><input type="time" id="shiftMulai" class="form-control form-control-sm" value="07:00" required oninput="syncShiftEnd()"></div>
+            <div class="col-4"><label class="form-label small" for="shiftSelesai">Pulang (otomatis)</label><input type="time" id="shiftSelesai" class="form-control form-control-sm" value="18:00" readonly required></div>
+          </div>
+          <div class="alert alert-danger py-2 d-none" id="shiftError" role="alert"></div>
+          <button class="btn btn-primary w-100" type="submit" id="btnSaveShift"><i class="bi bi-check2-square me-1"></i>Simpan Jadwal</button>
+          <div class="form-text">Jam kerja 11 jam; shift yang namanya mengandung "Malam" 10 jam. Jam pulang dihitung otomatis dari jam masuk. Jadwal pada tanggal yang sama untuk karyawan terpilih akan diganti.</div>
+        </form>
+      </div>
+    </div>
+    <div class="col-xl-8">
+      <div class="card shadow-sm">
+        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+          <span><i class="bi bi-calendar3 me-1"></i> Jadwal Terpasang</span>
+          <div class="d-flex gap-2">
+            <select id="shiftFilterUser" class="form-select form-select-sm w-auto"></select>
+            <input type="month" id="shiftFilterMonth" class="form-control form-control-sm w-auto" aria-label="Bulan">
+          </div>
+        </div>
+        <div class="table-responsive" style="max-height:70vh"><table class="table table-sm align-middle mb-0">
+          <thead class="sticky-top"><tr><th>Tanggal</th><th>Karyawan</th><th>Shift</th><th>Jam</th><th class="text-end">Aksi</th></tr></thead>
+          <tbody id="shiftAdminBody"><tr><td colspan="5" class="text-center text-body-secondary py-3">Memuat...</td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid px-4 d-none" id="payrollView">
+  <ul class="nav nav-pills mb-3 gap-1" role="tablist">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#payTabGaji" type="button">Slip Gaji</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#payTabAbsen" type="button">Rekap Absensi</button></li>
+  </ul>
+  <div class="tab-content">
+    <div class="tab-pane fade show active" id="payTabGaji">
+      <div class="card shadow-sm">
+        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+          <span><i class="bi bi-cash-coin me-1"></i> Penggajian Karyawan</span>
+          <input type="month" id="payMonth" class="form-control form-control-sm w-auto" aria-label="Periode">
+        </div>
+        <div class="card-body pb-0 small text-body-secondary" id="payRules"></div>
+        <div class="table-responsive"><table class="table table-sm align-middle mb-0">
+          <thead><tr><th>Karyawan</th><th class="text-end">Hadir</th><th class="text-end">Telat</th><th class="text-end">Lembur (mnt)</th><th class="text-end">Gaji Pokok</th><th class="text-end">Tunjangan</th><th class="text-end">Bonus</th><th class="text-end">+ Lembur</th><th class="text-end">- Telat</th><th class="text-end">- Lainnya</th><th class="text-end">Total</th><th class="text-end">Aksi</th></tr></thead>
+          <tbody id="payBody"><tr><td colspan="12" class="text-center text-body-secondary py-3">Memuat...</td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+    <div class="tab-pane fade" id="payTabAbsen">
+      <div class="card shadow-sm">
+        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+          <span><i class="bi bi-person-check me-1"></i> Rekap Absensi</span>
+          <div class="d-flex flex-wrap gap-2">
+            <select id="absFilterUser" class="form-select form-select-sm w-auto"></select>
+            <input type="date" id="absDari" class="form-control form-control-sm w-auto" aria-label="Dari">
+            <input type="date" id="absSampai" class="form-control form-control-sm w-auto" aria-label="Sampai">
+            <button class="btn btn-sm btn-primary" onclick="loadAbsensiAdmin()"><i class="bi bi-search me-1"></i>Tampilkan</button>
+          </div>
+        </div>
+        <div class="card-body pb-0 small text-body-secondary" id="absNote"></div>
+        <div class="table-responsive" style="max-height:70vh"><table class="table table-sm align-middle mb-0">
+          <thead class="sticky-top"><tr><th>Tanggal</th><th>Karyawan</th><th>Shift</th><th>Masuk</th><th>Pulang</th><th>Status</th><th class="text-end">Lembur (mnt)</th><th>Foto</th></tr></thead>
+          <tbody id="absBody"><tr><td colspan="8" class="text-center text-body-secondary py-3">Memuat...</td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade hr-modal" id="modalGaji" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+  <form id="gajiForm" autocomplete="off">
+    <div class="modal-header"><h5 class="modal-title"><i class="bi bi-cash-coin me-2"></i>Komponen Gaji</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button></div>
+    <div class="modal-body">
+      <div class="small text-body-secondary mb-3" id="gajiTitle"></div>
+      <div class="row g-2">
+        <div class="col-6"><label class="form-label small" for="gajiPokok">Gaji pokok</label><input type="number" min="0" step="1" id="gajiPokok" class="form-control" required></div>
+        <div class="col-6"><label class="form-label small" for="gajiTunjangan">Tunjangan</label><input type="number" min="0" step="1" id="gajiTunjangan" class="form-control"></div>
+        <div class="col-6"><label class="form-label small" for="gajiBonus">Bonus lain</label><input type="number" min="0" step="1" id="gajiBonus" class="form-control"></div>
+        <div class="col-6"><label class="form-label small" for="gajiPotongan">Potongan lain</label><input type="number" min="0" step="1" id="gajiPotongan" class="form-control"></div>
+        <div class="col-12"><label class="form-label small" for="gajiCatatan">Catatan</label><input id="gajiCatatan" class="form-control" maxlength="100"></div>
+      </div>
+      <div class="form-text mt-2">Bonus lembur dan potongan telat dihitung otomatis dari data absensi.</div>
+      <div class="alert alert-danger py-2 mt-2 mb-0 d-none" id="gajiError" role="alert"></div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button><button type="submit" class="btn btn-primary">Simpan</button></div>
+  </form>
+</div></div></div>
+
+<div class="modal fade hr-modal" id="modalSlipAdmin" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title"><i class="bi bi-file-earmark-text me-2"></i>Slip Gaji</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button></div>
+  <div class="modal-body" id="slipAdminBox"></div>
+  <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" onclick="printSlip(window.adminSlip)"><i class="bi bi-printer me-1"></i>Cetak</button><button type="button" class="btn btn-success" onclick="downloadSlipPdf(window.adminSlip)"><i class="bi bi-download me-1"></i>Unduh PDF</button></div>
+</div></div></div>
+
+<div class="modal fade hr-modal" id="modalFotoAbsen" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title" id="fotoTitle">Foto Absen</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button></div>
+  <div class="modal-body text-center"><img id="fotoImg" class="img-fluid rounded d-none" alt="Foto absen"><div class="text-body-secondary" id="fotoMsg"></div></div>
+</div></div></div>

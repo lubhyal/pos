@@ -80,11 +80,27 @@ Tambah, ubah, ganti password, dan **hapus** user. Pencarian dan filter berdasark
 ### Data Master dan Pengaturan
 Kelompok barang, supplier, anggota/pelanggan; profil usaha, header/footer struk, dan opsi cetak. Di **Pengaturan** admin juga dapat mengunggah **logo toko** (PNG/JPG) yang otomatis diubah hitam-putih dan dicetak di atas nama toko pada nota. Logo disimpan di file `logo.dat` di folder aplikasi. Teks nota dicetak tebal agar jelas di printer thermal.
 
+### Absensi Selfie, Shift, dan Penggajian
+- **Satu akun untuk semua**: kasir, admin gudang, admin, atau bos yang juga karyawan cukup punya satu akun. Di Manajemen User aktifkan opsi **Ikut absensi & penggajian**; menu Absen, Shift, Slip Gaji, Kinerja, dan Kehadiran muncul di akun itu, dan user masuk daftar gaji. Role **Karyawan** dipakai untuk pegawai yang hanya absen.
+- **Karyawan** (role `karyawan`) hanya melihat menu: Dashboard (grafik kehadiran), Absen, Shift Kerja, Slip Gaji (cetak/unduh PDF), Kinerja, dan Status Kehadiran.
+- **Absen Masuk/Pulang** wajib foto selfie dari kamera. Waktu dicatat otomatis oleh server. Kamera langsung hanya jalan di `localhost`/HTTPS; di HTTP lewat LAN, tombol absen membuka kamera ponsel.
+- **Foto harus menampilkan wajah**: sebelum dikirim, foto diperiksa deteksi wajah di browser. Tanpa wajah, absen ditolak. Detektor bawaan browser atau MediaPipe (dimuat dari internet). Bila detektor tidak bisa dimuat (offline), absen tetap diterima dengan peringatan "tidak diverifikasi".
+- **Jam kerja 11 jam; shift malam 10 jam** (shift yang namanya mengandung "Malam"). Jam pulang dihitung otomatis dari jam masuk, dan server menolak jadwal dengan durasi lain. Preset: Pagi 07-18, Siang 12-23, Malam 20-06.
+- **Foto otomatis dihapus** setelah 2 hari (ubah dengan variabel lingkungan `ABSEN_FOTO_HARI`). Jam masuk/pulang tetap tersimpan. Pembersihan berjalan saat server start dan setiap 1 jam.
+- **Admin/bos**: menu *Pengaturan Shift* (bagikan jadwal ke banyak karyawan sekaligus per rentang tanggal/hari) dan *Penggajian & Absensi* (input gaji pokok, tunjangan, bonus, potongan; lihat slip; rekap absensi dan foto).
+- **Telat otomatis**: dihitung sejak 5 menit sebelum jam masuk shift; setiap kelipatan 5 menit dipotong Rp 5.000.
+- **Lembur otomatis**: setiap kelipatan 50 menit setelah jam pulang shift mendapat bonus Rp 10.000.
+- Tabel `pos_jadwal`, `pos_absen`, `pos_gaji` dibuat otomatis saat server pertama kali dijalankan.
+
+### Cetak Printer Thermal 58mm
+Nota dan label barcode dicetak lewat jendela cetak terpisah dengan ukuran halaman tepat (area cetak 48mm), tanpa margin, sehingga tidak lagi menghasilkan kertas kosong panjang. Di dialog cetak pilih printer thermal, margin **None**, skala **100%**.
+
 ## Hak akses per role
 
 | Role | Akses |
 |------|-------|
-| **admin / bos** | Semua menu: dashboard, laporan lengkap, user, data master, pengaturan, setoran semua kasir |
+| **admin / bos** | Semua menu: dashboard, laporan lengkap, user, data master, pengaturan, setoran semua kasir, shift, penggajian |
+| **karyawan** | Absen selfie, shift kerja, slip gaji, kinerja, status kehadiran milik sendiri |
 | **kasir** | Kasir, piutang, retur jual, laporan penjualan milik sendiri, lapor setoran sendiri |
 | **gudang** | Stok barang, pembelian, retur beli, stok opname, supplier |
 
