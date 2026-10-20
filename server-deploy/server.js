@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '400kb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -96,7 +96,7 @@ async function createSession(res, user) {
 async function getSessionUser(token) {
   if (!token || !/^[a-f0-9]{64}$/.test(token)) return null;
   const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
-  const rows = await query(`SELECT a.KdUser, a.Nmuser, a.Role, a.CanCashier
+  const rows = await query(`SELECT a.KdUser, a.Nmuser, a.Role, a.CanCashier, a.IsKaryawan
     FROM pos_sessions s JOIN pos_auth a ON a.KdUser = s.KdUser
     WHERE s.TokenHash = ? AND s.ExpiresAt > NOW() AND a.IsActive = 'Y' LIMIT 1`, [tokenHash]);
   return rows[0] || null;
@@ -175,6 +175,8 @@ async function ensureAuthTables() {
   ) TYPE=MyISAM`);
   const cashierColumn = await query("SHOW COLUMNS FROM pos_auth LIKE 'CanCashier'");
   if (!cashierColumn.length) await query("ALTER TABLE pos_auth ADD COLUMN CanCashier char(1) NOT NULL default 'N'");
+  const staffColumn = await query("SHOW COLUMNS FROM pos_auth LIKE 'IsKaryawan'");
+  if (!staffColumn.length) await query("ALTER TABLE pos_auth ADD COLUMN IsKaryawan char(1) NOT NULL default 'N'");
   await query('DELETE FROM pos_sessions WHERE ExpiresAt <= NOW()');
   const users = await query('SELECT KdUser FROM pos_auth LIMIT 1');
   if (!users.length) {
@@ -205,7 +207,7 @@ app.use('/api', (req, res, next) => {
   const route = req.path;
   const isRead = method === 'GET';
   const commonRead = ['/options', '/barang', '/cari-barang', '/kode-barang-berikutnya', '/kelompok', '/pengaturan', '/logo'];
-  let allowed = commonRead.includes(route) && isRead;
+  let allowed = req.user.Role !== 'karyawan' && commonRead.includes(route) && isRead;
 
   if (req.user.Role === 'kasir' || (req.user.Role === 'gudang' && req.user.CanCashier === 'Y')) {
     allowed ||= isRead && ['/anggota', '/kasir', '/penjualan/recent', '/penjualan/pending', '/piutang', '/laporan-kasir', '/setoran/saya', '/kas-awal', '/nota/penjualan', '/nota/retur', '/retur-penjualan/recent'].includes(route);
@@ -214,6 +216,10 @@ app.use('/api', (req, res, next) => {
     allowed ||= method === 'POST' && ['/penjualan', '/penjualan/pending', '/penjualan/batal', '/retur-penjualan', '/piutang/bayar'].includes(route);
     allowed ||= method === 'PUT' && ['/setoran/saya', '/kas-awal'].includes(route);
     allowed ||= method === 'DELETE' && /^\/penjualan\/pending\/[^/]+$/.test(route);
+  }
+  if (req.user.Role === 'karyawan' || req.user.IsKaryawan === 'Y') {
+    allowed ||= isRead && ['/karyawan/ringkasan', '/jadwal/saya', '/gaji/slip', '/pengaturan', '/logo'].includes(route);
+    allowed ||= method === 'POST' && route === '/absensi';
   }
   if (req.user.Role === 'gudang') {
     allowed ||= isRead && ['/supplier'].includes(route);
@@ -292,14 +298,14 @@ app.post('/api/auth/login', async (req, res) => {
   const KdUser = String(req.body.KdUser || '').trim();
   const password = String(req.body.password || '');
   try {
-    const rows = await query(`SELECT a.KdUser, a.Nmuser, a.PasswordHash, a.Role, a.IsActive, a.CanCashier
+    const rows = await query(`SELECT a.KdUser, a.Nmuser, a.PasswordHash, a.Role,     a.IsActive, a.CanCashier, a.IsKaryawan
       FROM pos_auth a WHERE a.KdUser = ? LIMIT 1`, [KdUser]);
     const user = rows[0];
     if (!user || user.IsActive !== 'Y' || !(await verifyPassword(password, user.PasswordHash))) {
       return res.status(401).json({ success: false, message: 'Kode user atau password salah.' });
     }
     await createSession(res, user);
-    res.json({ success: true, user: { KdUser: user.KdUser, Nmuser: user.Nmuser, Role: user.Role, CanCashier: user.CanCashier } });
+    res.json({ success: true, user: { KdUser: user.KdUser, Nmuser: user.Nmuser, Role: user.Role, CanCashier: user.CanCashier, IsKaryawan: user.IsKaryawan } });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Login gagal diproses.' });
   }
@@ -342,7 +348,7 @@ app.post('/api/auth/logout', async (req, res) => {
 app.get('/api/users', async (req, res) => {
   if (!requireAdmin(req, res)) return;
   try {
-    const data = await query('SELECT KdUser, Nmuser, Role, IsActive, CanCashier FROM pos_auth ORDER BY Nmuser ASC');
+    const data = await query('SELECT KdUser, Nmuser, Role, IsActive, CanCashier, IsKaryawan FROM pos_auth ORDER BY Nmuser ASC');
     res.json({ success: true, data });
   } catch (err) {
     res.status(500).json({ success: false, message: 'Gagal mengambil user.' });
@@ -355,7 +361,7 @@ app.post('/api/users', async (req, res) => {
   const Nmuser = String(req.body.Nmuser || '').trim();
   const password = String(req.body.password || '');
   const Role = String(req.body.Role || 'kasir');
-  if (!/^[A-Za-z0-9_-]{1,5}$/.test(KdUser) || !Nmuser || Nmuser.length > 20 || password.length < 3 || !['admin', 'bos', 'kasir', 'gudang'].includes(Role)) {
+  if (!/^[A-Za-z0-9_-]{1,5}$/.test(KdUser) || !Nmuser || Nmuser.length > 20 || password.length < 3 || !['admin', 'bos', 'kasir', 'gudang', 'karyawan'].includes(Role)) {
     return res.status(400).json({ success: false, message: 'Kode user maks. 5 karakter, nama maks. 20 karakter, password minimal 3 karakter, dan role harus valid.' });
   }
   try {
@@ -365,10 +371,11 @@ app.post('/api/users', async (req, res) => {
     if (legacyUser.length) await query('UPDATE kunci SET Nmuser = ? WHERE KdUser = ?', [Nmuser, KdUser]);
     else await query('INSERT INTO kunci (KdUser, Nmuser) VALUES (?, ?)', [KdUser, Nmuser]);
     const PasswordHash = await hashPassword(password);
-    await query('INSERT INTO pos_auth (KdUser, Nmuser, PasswordHash, Role, IsActive, CanCashier) VALUES (?, ?, ?, ?, ?, ?)',
-      [KdUser, Nmuser, PasswordHash, Role, 'Y', Role === 'gudang' && req.body.CanCashier === 'Y' ? 'Y' : 'N']);
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Gagal menambah user.' });
+    await query('INSERT INTO pos_auth (KdUser, Nmuser, PasswordHash, Role, IsActive, CanCashier, IsKaryawan) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [KdUser, Nmuser, PasswordHash, Role, 'Y', Role === 'gudang' && req.body.CanCashier === 'Y' ? 'Y' : 'N', Role === 'karyawan' || req.body.IsKaryawan === 'Y' ? 'Y' : 'N']);
+          res.json({ success: true, message: 'User berhasil ditambahkan.' });
+        } catch (err) {
+          res.status(500).json({ success: false, message: 'Gagal menambah user.' });
   }
 });
 
@@ -379,7 +386,7 @@ app.put('/api/users/:kdUser', async (req, res) => {
   const Role = String(req.body.Role || 'kasir');
   const IsActive = req.body.IsActive === 'N' ? 'N' : 'Y';
   const password = String(req.body.password || '');
-  if (!Nmuser || Nmuser.length > 20 || !['admin', 'bos', 'kasir', 'gudang'].includes(Role) || (password && password.length < 3)) {
+  if (!Nmuser || Nmuser.length > 20 || !['admin', 'bos', 'kasir', 'gudang', 'karyawan'].includes(Role) || (password && password.length < 3)) {
     return res.status(400).json({ success: false, message: 'Nama maks. 20 karakter, role harus valid, dan password baru minimal 3 karakter.' });
   }
   try {
@@ -391,8 +398,8 @@ app.put('/api/users/:kdUser', async (req, res) => {
       if (admins.length <= 1) return res.status(400).json({ success: false, message: 'Tidak dapat menonaktifkan atau menurunkan satu-satunya admin.' });
     }
 
-    await query('UPDATE pos_auth SET Nmuser = ?, Role = ?, IsActive = ?, CanCashier = ? WHERE KdUser = ?',
-      [Nmuser, Role, IsActive, Role === 'gudang' && req.body.CanCashier === 'Y' ? 'Y' : 'N', KdUser]);
+    await query('UPDATE pos_auth SET Nmuser = ?, Role = ?, IsActive = ?, CanCashier = ?, IsKaryawan = ? WHERE KdUser = ?',
+      [Nmuser, Role, IsActive, Role === 'gudang' && req.body.CanCashier === 'Y' ? 'Y' : 'N', Role === 'karyawan' || req.body.IsKaryawan === 'Y' ? 'Y' : 'N', KdUser]);
     await query('UPDATE kunci SET Nmuser = ? WHERE KdUser = ?', [Nmuser, KdUser]);
     if (password) {
       const PasswordHash = await hashPassword(password);
@@ -2369,6 +2376,10 @@ app.delete('/api/barang/:kdBar', async (req, res) => {
 async function startServer() {
   try {
     await ensureAuthTables();
+    const hr = require('./hr')({ query, hasManagerRole });
+    await hr.ensureTables();
+    hr.register(app);
+    hr.startCleanup();
     app.listen(PORT, () => {
       console.log(`Server berjalan di http://localhost:${PORT}`);
     });

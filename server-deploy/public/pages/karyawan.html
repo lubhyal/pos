@@ -1,0 +1,122 @@
+<div class="container-fluid px-4 d-none" id="empDashView">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+      <div>
+        <h5 class="mb-0 fw-bold" id="empGreeting">Selamat datang</h5>
+        <small class="text-body-secondary" id="empDate"></small>
+      </div>
+      <div class="d-flex gap-2 align-items-center">
+        <input type="month" class="form-control form-control-sm emp-month" aria-label="Bulan">
+        <button class="btn btn-sm btn-glass" onclick="loadEmployeeData()" title="Muat ulang"><i class="bi bi-arrow-clockwise"></i></button>
+      </div>
+    </div>
+    <div class="row g-3 mb-3">
+      <div class="col-sm-6 col-xl-3"><div class="stat-card g-green"><i class="bi bi-person-check stat-icon"></i><div class="stat-label">Hari Hadir</div><div class="stat-value" id="empKpiHadir">-</div><div class="stat-sub" id="empKpiHadirSub">&nbsp;</div></div></div>
+      <div class="col-sm-6 col-xl-3"><div class="stat-card g-orange"><i class="bi bi-alarm stat-icon"></i><div class="stat-label">Terlambat</div><div class="stat-value" id="empKpiTelat">-</div><div class="stat-sub" id="empKpiTelatSub">&nbsp;</div></div></div>
+      <div class="col-sm-6 col-xl-3"><div class="stat-card g-blue"><i class="bi bi-hourglass-split stat-icon"></i><div class="stat-label">Total Lembur</div><div class="stat-value" id="empKpiLembur">-</div><div class="stat-sub" id="empKpiLemburSub">&nbsp;</div></div></div>
+      <div class="col-sm-6 col-xl-3"><div class="stat-card g-purple"><i class="bi bi-bullseye stat-icon"></i><div class="stat-label">Tingkat Kehadiran</div><div class="stat-value" id="empKpiPersen">-</div><div class="stat-sub" id="empKpiPersenSub">&nbsp;</div></div></div>
+    </div>
+    <div class="row g-3 mb-3">
+      <div class="col-xl-4"><div class="card h-100"><div class="card-header"><i class="bi bi-pie-chart me-1"></i> Ringkasan Kehadiran</div><div class="card-body"><div class="chart-box"><canvas id="empChartHadir"></canvas></div></div></div></div>
+      <div class="col-xl-8"><div class="card h-100"><div class="card-header"><i class="bi bi-bar-chart-line me-1"></i> Jam Kerja &amp; Lembur per Hari</div><div class="card-body"><div class="chart-box"><canvas id="empChartJam"></canvas></div></div></div></div>
+    </div>
+    <div class="card"><div class="card-body d-flex flex-wrap align-items-center gap-3">
+      <div><div class="small text-body-secondary">Hari ini</div><div class="fw-semibold" id="empTodayText">-</div></div>
+      <button class="btn btn-success ms-auto" onclick="showView('absenView')"><i class="bi bi-camera me-1"></i>Buka Absen</button>
+    </div></div>
+</div>
+
+<div class="container-fluid px-4 d-none" id="absenView">
+  <div class="row g-3 justify-content-center">
+    <div class="col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center"><span><i class="bi bi-camera me-1"></i> Absen Selfie</span><span class="badge text-bg-success" id="absenStateBadge">-</span></div>
+        <div class="card-body text-center">
+          <div class="display-6 fw-bold" id="absenClock">--:--:--</div>
+          <div class="text-body-secondary mb-2" id="absenDateText"></div>
+          <div class="small mb-3" id="absenShift">-</div>
+          <div class="position-relative mx-auto mb-3 bg-black rounded overflow-hidden" style="max-width:420px;aspect-ratio:4/3">
+            <video id="absenVideo" class="w-100 h-100 d-none" style="object-fit:cover;transform:scaleX(-1)" autoplay playsinline muted></video>
+            <img id="absenPreview" class="w-100 h-100 d-none" style="object-fit:cover" alt="Foto absen terakhir">
+            <div id="absenPlaceholder" class="position-absolute top-50 start-50 translate-middle text-white-50"><i class="bi bi-camera-video-off fs-1"></i><div class="small">Kamera belum aktif</div></div>
+          </div>
+          <input type="file" id="absenFile" accept="image/*" capture="user" class="d-none">
+          <canvas id="absenCanvas" class="d-none"></canvas>
+          <div class="d-grid gap-2 d-sm-flex justify-content-center mb-2">
+            <button class="btn btn-outline-secondary" id="btnCamera" onclick="startAbsenCamera()"><i class="bi bi-camera-video me-1"></i>Aktifkan Kamera</button>
+            <button class="btn btn-success btn-lg" id="btnAbsenMasuk" onclick="submitAbsen('MASUK')"><i class="bi bi-box-arrow-in-right me-1"></i>Absen Masuk</button>
+            <button class="btn btn-warning btn-lg" id="btnAbsenPulang" onclick="submitAbsen('PULANG')"><i class="bi bi-box-arrow-left me-1"></i>Absen Pulang</button>
+          </div>
+          <div class="alert d-none py-2 mb-2" id="absenMsg" role="alert"></div>
+          <div class="small text-body-secondary" id="absenHint">Wajah harus terlihat jelas. Waktu absen dicatat otomatis oleh server saat foto dikirim.</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-header"><i class="bi bi-list-check me-1"></i> Absensi Hari Ini</div>
+        <div class="card-body" id="absenTodayBox"><div class="text-body-secondary">Memuat...</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid px-4 d-none" id="shiftView">
+  <div class="card shadow-sm">
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <span><i class="bi bi-calendar-week me-1"></i> Jadwal Shift Kerja</span>
+      <input type="month" class="form-control form-control-sm emp-month w-auto" aria-label="Bulan">
+    </div>
+    <div class="table-responsive"><table class="table table-sm align-middle mb-0">
+      <thead><tr><th>Tanggal</th><th>Hari</th><th>Shift</th><th>Jam Kerja</th></tr></thead>
+      <tbody id="shiftBody"><tr><td colspan="4" class="text-center text-body-secondary py-3">Memuat...</td></tr></tbody>
+    </table></div>
+  </div>
+</div>
+
+<div class="container-fluid px-4 d-none" id="slipView">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <h5 class="mb-0 fw-bold"><i class="bi bi-file-earmark-text me-1"></i> Slip Gaji</h5>
+    <div class="d-flex gap-2 align-items-center">
+      <input type="month" class="form-control form-control-sm emp-month" aria-label="Bulan">
+      <button class="btn btn-sm btn-outline-secondary" onclick="printSlip(window.empSlip)"><i class="bi bi-printer me-1"></i>Cetak</button>
+      <button class="btn btn-sm btn-success" onclick="downloadSlipPdf(window.empSlip)"><i class="bi bi-download me-1"></i>Unduh PDF</button>
+    </div>
+  </div>
+  <div class="card shadow-sm"><div class="card-body" id="slipBox"><div class="text-body-secondary">Memuat...</div></div></div>
+</div>
+
+<div class="container-fluid px-4 d-none" id="kinerjaView">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <h5 class="mb-0 fw-bold"><i class="bi bi-activity me-1"></i> Kinerja</h5>
+    <input type="month" class="form-control form-control-sm emp-month w-auto" aria-label="Bulan">
+  </div>
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-xl-3"><div class="mini-stat"><span class="mini-icon g-green"><i class="bi bi-check2-circle"></i></span><div><div class="mini-value" id="kinTepat">-</div><div class="mini-label">Ketepatan waktu</div></div></div></div>
+    <div class="col-6 col-xl-3"><div class="mini-stat"><span class="mini-icon g-blue"><i class="bi bi-calendar-check"></i></span><div><div class="mini-value" id="kinHadir">-</div><div class="mini-label">Kehadiran (jadwal)</div></div></div></div>
+    <div class="col-6 col-xl-3"><div class="mini-stat"><span class="mini-icon g-teal"><i class="bi bi-clock-history"></i></span><div><div class="mini-value" id="kinJam">-</div><div class="mini-label">Total jam kerja</div></div></div></div>
+    <div class="col-6 col-xl-3"><div class="mini-stat"><span class="mini-icon g-orange"><i class="bi bi-hourglass-split"></i></span><div><div class="mini-value" id="kinRata">-</div><div class="mini-label">Rata-rata jam/hari</div></div></div></div>
+  </div>
+  <div class="row g-3">
+    <div class="col-xl-5"><div class="card h-100"><div class="card-header"><i class="bi bi-bullseye me-1"></i> Capaian Bulan Ini</div><div class="card-body"><div class="chart-box"><canvas id="kinChartPersen"></canvas></div></div></div></div>
+    <div class="col-xl-7"><div class="card h-100"><div class="card-header"><i class="bi bi-graph-up me-1"></i> Selisih Jam Masuk vs Jadwal (menit)</div><div class="card-body"><div class="chart-box"><canvas id="kinChartMasuk"></canvas></div><div class="small text-body-secondary mt-2">Batang di bawah 0 = datang lebih awal dari jam shift.</div></div></div></div>
+  </div>
+</div>
+
+<div class="container-fluid px-4 d-none" id="hadirView">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <h5 class="mb-0 fw-bold"><i class="bi bi-person-check me-1"></i> Status Kehadiran</h5>
+    <input type="month" class="form-control form-control-sm emp-month w-auto" aria-label="Bulan">
+  </div>
+  <div class="row g-3 mb-3">
+    <div class="col-6 col-xl-3"><div class="mini-stat"><span class="mini-icon g-green"><i class="bi bi-check2-circle"></i></span><div><div class="mini-value" id="hdTepat">-</div><div class="mini-label">Tepat waktu</div></div></div></div>
+    <div class="col-6 col-xl-3"><div class="mini-stat"><span class="mini-icon g-orange"><i class="bi bi-alarm"></i></span><div><div class="mini-value" id="hdTelat">-</div><div class="mini-label">Telat</div></div></div></div>
+    <div class="col-6 col-xl-3"><div class="mini-stat"><span class="mini-icon g-red"><i class="bi bi-x-circle"></i></span><div><div class="mini-value" id="hdAlpha">-</div><div class="mini-label">Tidak hadir (terjadwal)</div></div></div></div>
+    <div class="col-6 col-xl-3"><div class="mini-stat"><span class="mini-icon g-blue"><i class="bi bi-hourglass-split"></i></span><div><div class="mini-value" id="hdLembur">-</div><div class="mini-label" id="hdLemburSub">Total lembur</div></div></div></div>
+  </div>
+  <div class="card shadow-sm">
+    <div class="table-responsive"><table class="table table-sm align-middle mb-0">
+      <thead><tr><th>Tanggal</th><th>Shift</th><th>Masuk</th><th>Pulang</th><th>Status</th><th class="text-end">Lembur</th></tr></thead>
+      <tbody id="hdBody"><tr><td colspan="6" class="text-center text-body-secondary py-3">Memuat...</td></tr></tbody>
+    </table></div>
+  </div>
+</div>
