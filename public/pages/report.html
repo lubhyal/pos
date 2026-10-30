@@ -16,6 +16,7 @@
   </div></div>
 
   <div class="row g-3 mb-3" id="reportCards"></div>
+  <div class="row g-3 mb-3" id="reportPaymentCards"></div>
 
   <ul class="nav nav-pills report-tabs mb-3 flex-nowrap overflow-auto" id="reportTabs">
     <li class="nav-item"><button class="nav-link active" data-tab="overview"><i class="bi bi-speedometer2 me-1"></i>Ringkasan</button></li>
@@ -55,12 +56,13 @@
   </div>
 
   <div class="report-pane d-none" data-pane="purchases">
+    <div class="row g-3 mb-3" id="purchaseReportCards"></div>
     <div class="row g-3">
       <div class="col-lg-5"><div class="card shadow-sm h-100"><div class="card-header fw-bold">Pembelian per Supplier</div><div class="card-body"><div class="chart-box"><canvas id="rcSupplier"></canvas></div></div></div></div>
       <div class="col-lg-7"><div class="card shadow-sm h-100"><div class="card-header d-flex flex-wrap gap-2 align-items-center"><span class="fw-bold me-auto">Transaksi Pembelian</span>
         <input type="search" class="form-control form-control-sm report-search" placeholder="Cari..." data-table="purchases">
         <button class="btn btn-sm btn-outline-secondary" onclick="exportReportCsv('purchases')"><i class="bi bi-download me-1"></i>CSV</button></div>
-        <div class="table-responsive report-scroll"><table class="table table-sm table-hover mb-0 report-table"><thead><tr><th>Tanggal</th><th>No. Faktur</th><th>Supplier</th><th>Keterangan</th><th class="text-end">Total</th><th class="text-end">Dibayar</th></tr></thead><tbody id="rtPurchases"></tbody></table></div></div></div>
+        <div class="table-responsive report-scroll"><table class="table table-sm table-hover mb-0 report-table"><thead><tr><th>Tanggal</th><th>No. Faktur</th><th>Supplier</th><th>Keterangan</th><th class="text-end">Total</th><th class="text-end">Tunai / Kasir</th><th class="text-end">Transfer</th><th class="text-end">Saldo</th><th class="text-end">Konsinyasi Qty</th><th class="text-end">Konsinyasi Nilai</th></tr></thead><tbody id="rtPurchases"></tbody></table></div></div></div>
     </div>
   </div>
 

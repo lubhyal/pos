@@ -43,7 +43,8 @@ Halaman awal berisi statistik penjualan, jumlah transaksi, ringkasan stok, grafi
 Pilih faktur asal, isi jumlah retur per barang (tidak boleh melebihi sisa), tentukan refund tunai. Stok bertambah kembali dan kas kasir terkoreksi. **Nota retur** langsung tercetak setelah disimpan.
 
 ### Pembelian dan Retur Beli
-Catat pembelian dari supplier (stok dan harga beli ikut diperbarui), serta retur ke supplier. Pada form pembelian yang sama, **harga beli dan harga jual** dapat diisi/diubah per barang (margin ditampilkan, merah bila negatif); keduanya otomatis tersimpan ke data barang saat pembelian disimpan.
+Catat pembelian dari supplier (stok dan harga beli ikut diperbarui), serta retur ke supplier. Pada form pembelian yang sama, **harga beli dan harga jual** dapat diisi/diubah per barang (margin ditampilkan, merah bila negatif); keduanya otomatis tersimpan ke data barang saat pembelian disimpan. Pembayaran dapat dibagi antara **tunai melalui kasir** dan **transfer**; selisih terhadap total menjadi saldo utang supplier. Barang titipan dapat ditandai **konsinyasi** per baris.
+Kolom pembayaran tunai/transfer dan penanda konsinyasi dibuat otomatis saat server dimulai. Pembelian lama dengan nilai `Bayar` akan dianggap sebagai pembayaran tunai; pembelian lama tidak otomatis dianggap konsinyasi.
 
 ### Stok Opname
 Sesuaikan stok sistem dengan hasil hitung fisik; selisih dicatat di kartu stok.
@@ -54,6 +55,7 @@ Daftar piutang pelanggan/anggota dan pencatatan pembayaran cicilan.
 ### Laporan Penjualan (kasir dan admin)
 - Filter tanggal, kasir (admin), dan tombol cepat Hari ini / 7 hari / Bulan ini.
 - Kartu ringkasan: penjualan, rata-rata transaksi, diskon, transaksi batal, uang sistem, uang real, selisih.
+- Rincian nilai penjualan menurut metode pembayaran: **Tunai, QRIS, EDC, dan Transfer**.
 - Tab **Ringkasan** (grafik per hari, per kasir, per jam, barang terlaris), **Transaksi** (cari, batalkan, cetak ulang nota, ekspor CSV), **Barang Terjual**, dan **Setoran & Selisih**.
 - Kasir hanya melihat data miliknya sendiri.
 
@@ -72,7 +74,7 @@ Di Manajemen User, role **Admin Gudang** punya opsi **"Boleh juga menjadi kasir"
 Saat server pertama kali dijalankan, tabel `pos_kasawal` dan kolom `CanCashier` pada `pos_auth` dibuat otomatis.
 
 ### Laporan Lengkap (admin/bos)
-Satu halaman berisi filter tanggal/kasir/kelompok, tab Ringkasan, Penjualan, Barang, Pembelian, Retur, Kas, dan Stok, lengkap dengan grafik, pencarian tabel, dan ekspor CSV.
+Satu halaman berisi filter tanggal/kasir/kelompok, tab Ringkasan, Penjualan, Barang, Pembelian, Retur, Kas, dan Stok, lengkap dengan grafik, pencarian tabel, dan ekspor CSV. Laporan menampilkan rincian pembayaran penjualan **Tunai, QRIS, EDC, Transfer**, serta ringkasan pembelian **saldo, dibayar tunai/kasir, dibayar transfer, dan barang konsinyasi**.
 
 ### Manajemen User (admin/bos)
 Tambah, ubah, ganti password, dan **hapus** user. Pencarian dan filter berdasarkan role. Sistem mencegah penghapusan akun sendiri dan admin terakhir.
