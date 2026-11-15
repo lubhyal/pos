@@ -6,6 +6,7 @@ Aplikasi kasir, stok, dan laporan berbasis web berbahasa Indonesia. Aplikasi dij
 
 - **Satu aplikasi untuk semuanya:** kasir, stok, pembelian, retur, piutang, laporan, dan manajemen user.
 - **Ringan dan tanpa instalasi di klien:** cukup browser; bisa ditambahkan ke layar utama HP seperti aplikasi.
+- **Beban browser lebih ringan:** efek blur berat dihilangkan, sedangkan library grafik, Excel, PDF, dan barcode baru dimuat saat fiturnya digunakan.
 - **Tampilan modern:** gaya dashboard admin bernuansa hijau dan kuning dengan tema gradient/glass, mode terang dan gelap (kontras teks tabel disesuaikan), serta responsif untuk HP (semua tabel berubah menjadi kartu).
 - **Cetak barcode dan nota ringkas:** label barcode 40x20 mm untuk printer thermal, dan nota compact yang tetap lengkap.
 - **Kasir tidak terhambat stok:** barang dengan stok kosong tetap bisa dijual; stok tercatat minus sehingga selisih mudah ditelusuri.
@@ -95,7 +96,7 @@ Kelompok barang, supplier, anggota/pelanggan; profil usaha, header/footer struk,
 - Tabel `pos_jadwal`, `pos_absen`, `pos_gaji` dibuat otomatis saat server pertama kali dijalankan.
 
 ### Cetak Printer Thermal 58mm
-Nota dan label barcode dicetak lewat jendela cetak terpisah dengan ukuran halaman tepat (area cetak 48mm), tanpa margin, sehingga tidak lagi menghasilkan kertas kosong panjang. Di dialog cetak pilih printer thermal, margin **None**, skala **100%**.
+Nota memakai kertas roll 58mm dengan lebar konten maksimum 48mm. Barcode menggunakan ukuran label 40 x 20mm secara default; ukuran 58 x 26mm juga tersedia. Di Chrome pilih printer Iware dan ukuran kertas yang sesuai: roll 58mm untuk nota atau 40 x 20mm untuk stiker. Atur margin **None**, skala **100%**, dan matikan header/footer. Jika ukuran label tidak tersedia, buat ukuran khusus di driver printer. Posisi dan jarak antarstiker bergantung pada ukuran kertas dasar serta dukungan sensor dan pengaturan driver printer; uji cetak terlebih dahulu.
 
 ## Hak akses per role
 
@@ -172,7 +173,7 @@ Setelah file diperbarui:
 3. Restart aplikasi. Dengan PM2: `pm2 restart pos-server`.
 4. Di browser, tekan **Ctrl+F5** agar tampilan terbaru dimuat.
 
-Perubahan versi ini: tabel `pos_setoran` dibuat otomatis saat server berjalan; tidak ada dependency baru. Menu "Barang Terlaris" digantikan oleh Laporan Penjualan/Laporan Lengkap.
+Pembaruan ini mengurangi efek visual berat dan memuat library grafik, Excel, PDF, serta barcode saat diperlukan. Cetak nota menggunakan kertas 58mm, sedangkan stiker barcode menggunakan ukuran 40 x 20mm secara default. Tidak ada dependency npm baru.
 
 ## Menjalankan terus-menerus dengan PM2 (Windows)
 

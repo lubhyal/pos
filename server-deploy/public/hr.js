@@ -94,10 +94,11 @@ async function loadEmployeeData() {
   if (!currentUser || !(currentUser.Role === 'karyawan' || currentUser.IsKaryawan === 'Y')) return;
   try {
     empData = await hrJson(`/api/karyawan/ringkasan?bulan=${encodeURIComponent(empMonth)}`);
-    renderEmpDash();
     renderAbsenToday();
-    renderKinerja();
     renderHadir();
+    await loadChartLibrary();
+    renderEmpDash();
+    renderKinerja();
   } catch (err) {
     console.error('Gagal memuat data karyawan:', err);
     const box = hrEl('absenTodayBox');
@@ -469,9 +470,13 @@ function printSlip(slip) {
   printDocument({ html: slipHtml(slip), css: SLIP_CSS, widthMm: 148, heightMm: 210 });
 }
 
-function downloadSlipPdf(slip) {
+async function downloadSlipPdf(slip) {
   if (!slip) return alert('Slip gaji belum tersedia.');
-  if (!window.jspdf || !window.jspdf.jsPDF) return alert('Modul PDF belum siap (butuh koneksi internet). Coba lagi sebentar.');
+  try {
+    await loadPdfLibrary();
+  } catch (err) {
+    return alert(err.message);
+  }
   const doc = new window.jspdf.jsPDF({ unit: 'mm', format: 'a5' });
   const rows = slipRows(slip);
   const money = v => formatRupiah(v);
