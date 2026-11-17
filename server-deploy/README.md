@@ -81,7 +81,7 @@ Satu halaman berisi filter tanggal/kasir/kelompok, tab Ringkasan, Penjualan, Bar
 Tambah, ubah, ganti password, dan **hapus** user. Pencarian dan filter berdasarkan role. Sistem mencegah penghapusan akun sendiri dan admin terakhir.
 
 ### Data Master dan Pengaturan
-Kelompok barang, supplier, anggota/pelanggan; profil usaha, header/footer struk, dan opsi cetak. Di **Pengaturan** admin juga dapat mengunggah **logo toko** (PNG/JPG) yang otomatis diubah hitam-putih dan dicetak di atas nama toko pada nota. Logo disimpan di file `logo.dat` di folder aplikasi. Teks nota dicetak tebal agar jelas di printer thermal.
+Kelompok barang, supplier, anggota/pelanggan; profil usaha, header/footer struk, dan opsi cetak. Ukuran kertas nota dapat dipilih 58 mm atau 40 mm di **Pengaturan**. Admin juga dapat mengunggah **logo toko** (PNG/JPG) yang otomatis diubah hitam-putih dan dicetak di atas nama toko pada nota. Logo disimpan di file `logo.dat` di folder aplikasi. Teks nota dicetak tebal agar jelas di printer thermal.
 
 ### Absensi Selfie, Shift, dan Penggajian
 - **Satu akun untuk semua**: kasir, admin gudang, admin, atau bos yang juga karyawan cukup punya satu akun. Di Manajemen User aktifkan opsi **Ikut absensi & penggajian**; menu Absen, Shift, Slip Gaji, Kinerja, dan Kehadiran muncul di akun itu, dan user masuk daftar gaji. Role **Karyawan** dipakai untuk pegawai yang hanya absen.

@@ -1698,9 +1698,9 @@ app.get('/api/pengaturan', async (req, res) => {
     const isManager = hasManagerRole(req.user);
     const fields = isManager
       ? `NmUsaha, ALUsaha, Kota, Propinsi, Negara, KodePos, NoTelp, Nofax, NPWP, Email, Hpage,
-      CetJual, CetBataljual, Cetbeli, Headjual, FootJual, FootJual2, FootJual3, Barcode, FakturAut, QTYJUAL, DISC, PPN
+      CetJual, CetBataljual, Cetbeli, Headjual, FootJual, FootJual2, FootJual3, Barcode, FakturAut, QTYJUAL, DISC, PPN, ReceiptSize
       `
-      : `NmUsaha, ALUsaha, Kota, NoTelp, CetJual, Headjual, FootJual, FootJual2, FootJual3, QTYJUAL, DISC, PPN`;
+      : `NmUsaha, ALUsaha, Kota, NoTelp, CetJual, Headjual, FootJual, FootJual2, FootJual3, QTYJUAL, DISC, PPN, ReceiptSize`;
     const rows = await query(`SELECT ${fields} FROM usaha LIMIT 1`);
     res.json({ success: true, data: rows[0] || null });
   } catch (err) {
@@ -1722,17 +1722,19 @@ app.put('/api/pengaturan', async (req, res) => {
   const tax = Number(req.body.PPN || 0);
   const discount = Number(req.body.DISC || 0);
   const qty = Number(req.body.QTYJUAL || 0);
+  const receiptSize = String(req.body.ReceiptSize || '58').trim();
   if (invalidStringLength ||
       !Number.isFinite(tax) || tax < 0 || tax > 100 || !Number.isFinite(discount) || discount < 0 || discount > 100 ||
-      !Number.isInteger(qty) || qty < 0 || qty > 99999) {
-    return res.status(400).json({ success: false, message: 'Periksa batas panjang data usaha, diskon, PPN, atau jumlah barang pada struk.' });
+      !Number.isInteger(qty) || qty < 0 || qty > 99999 || !['40', '58'].includes(receiptSize)) {
+    return res.status(400).json({ success: false, message: 'Periksa batas panjang data usaha, diskon, PPN, jumlah barang pada struk, atau ukuran kertas nota.' });
   }
-  const fields = Object.keys(stringLengths).concat(['CetJual', 'Barcode', 'QTYJUAL', 'DISC', 'PPN']);
+  const fields = Object.keys(stringLengths).concat(['CetJual', 'Barcode', 'QTYJUAL', 'DISC', 'PPN', 'ReceiptSize']);
   values.CetJual = req.body.CetJual === '1' ? '1' : '0';
   values.Barcode = req.body.Barcode === '1' ? '1' : '0';
   values.QTYJUAL = qty;
   values.DISC = discount;
   values.PPN = tax;
+  values.ReceiptSize = receiptSize;
   ['CetBataljual', 'Cetbeli', 'FakturAut'].forEach(field => {
     if (req.body[field] === '0' || req.body[field] === '1') {
       values[field] = req.body[field];
@@ -2428,6 +2430,7 @@ async function startServer() {
   try {
     await ensureAuthTables();
     await ensurePurchaseReportingColumns();
+    await ensureReceiptSizeColumn();
     const hr = require('./hr')({ query, hasManagerRole });
     await hr.ensureTables();
     hr.register(app);
@@ -2452,6 +2455,13 @@ async function ensurePurchaseReportingColumns() {
     if (!found.length) await query(alter);
   }
   await query("UPDATE beli SET BayarTunai = Bayar WHERE BayarTunai = 0 AND BayarTransfer = 0 AND Bayar > 0");
+}
+
+async function ensureReceiptSizeColumn() {
+  const found = await query("SHOW COLUMNS FROM usaha LIKE 'ReceiptSize'");
+  if (!found.length) {
+    await query("ALTER TABLE usaha ADD COLUMN ReceiptSize varchar(2) NOT NULL default '58'");
+  }
 }
 
 startServer();
