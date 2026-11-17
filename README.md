@@ -113,7 +113,7 @@ Nota memakai kertas roll 58mm dengan lebar konten maksimum 48mm. Barcode menggun
 - Node.js dan npm.
 - MySQL yang dapat diakses oleh PC server dengan database dan tabel aplikasi yang sudah tersedia. Tabel tambahan (`pos_auth`, `pos_setoran`, dan sejenisnya) dibuat otomatis saat server pertama kali berjalan.
 
-> Konfigurasi koneksi database berada di `server.js` (`dbConfig`). Sesuaikan `host`, `user`, `password`, dan `database` sebelum menjalankan aplikasi. Jangan menyimpan atau membagikan kredensial database di repositori publik.
+> Konfigurasi koneksi database dapat diatur melalui environment variable `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_INSECURE_AUTH`, dan `DB_CONNECTION_LIMIT`. Jika tidak diatur, aplikasi memakai konfigurasi bawaan untuk menjaga kompatibilitas instalasi lama. Jangan menyimpan atau membagikan kredensial database di repositori publik.
 
 ## Menjalankan aplikasi
 

@@ -424,6 +424,7 @@
     <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Tutup</button><button type="button" class="btn btn-primary" onclick="printBarcodeLabels()"><i class="bi bi-printer me-1"></i>Cetak</button></div>
   </div></div></div>
   <section id="receiptPrint" aria-hidden="true"></section>
+  <input type="hidden" id="receiptSize" value="58">
   </div>
 
   <!-- Bootstrap 5 JS Bundle CDN -->
@@ -1718,8 +1719,15 @@
         const fields = { settingBusinessName: 'NmUsaha', settingPhone: 'NoTelp', settingAddress: 'ALUsaha', settingCountry: 'Negara',
           settingCity: 'Kota', settingProvince: 'Propinsi', settingPostal: 'KodePos', settingFax: 'Nofax', settingNpwp: 'NPWP',
           settingEmail: 'Email', settingWebsite: 'Hpage', settingTax: 'PPN', settingDiscount: 'DISC', settingQty: 'QTYJUAL',
-          settingReceiptHeader: 'Headjual', settingReceiptFooter: 'FootJual', settingReceiptFooter2: 'FootJual2', settingReceiptFooter3: 'FootJual3' };
-        Object.entries(fields).forEach(([inputId, field]) => { document.getElementById(inputId).value = data[field] ?? (['PPN', 'DISC', 'QTYJUAL'].includes(field) ? 0 : ''); });
+          settingReceiptHeader: 'Headjual', settingReceiptFooter: 'FootJual', settingReceiptFooter2: 'FootJual2', settingReceiptFooter3: 'FootJual3',
+          settingReceiptSize: 'ReceiptSize', receiptSize: 'ReceiptSize' };
+        Object.entries(fields).forEach(([inputId, field]) => {
+          const el = document.getElementById(inputId);
+          if (!el) return;
+          el.value = field === 'ReceiptSize'
+            ? normalizeReceiptSize(data[field])
+            : data[field] ?? (['PPN', 'DISC', 'QTYJUAL'].includes(field) ? 0 : '');
+        });
         document.getElementById('settingPrintSale').checked = data.CetJual === '1';
         document.getElementById('settingPrintBarcode').checked = data.Barcode === '1';
       } catch (err) { alert(err.message); }
@@ -1731,6 +1739,12 @@
         const result = await response.json();
         if (!result.success) throw new Error(result.message);
         businessSettings = result.data || {};
+        const receiptSize = normalizeReceiptSize(businessSettings.ReceiptSize);
+        businessSettings.ReceiptSize = receiptSize;
+        const receiptSizeInput = document.getElementById('receiptSize');
+        const receiptSizeSelect = document.getElementById('settingReceiptSize');
+        if (receiptSizeInput) receiptSizeInput.value = receiptSize;
+        if (receiptSizeSelect) receiptSizeSelect.value = receiptSize;
         loadReceiptLogo();
         document.getElementById('saleDiscount').value = Number(businessSettings.DISC) || 0;
         document.getElementById('purchaseTax').value = Number(businessSettings.PPN) || 0;
@@ -1754,13 +1768,15 @@
         QTYJUAL: Number(document.getElementById('settingQty').value) || 0, Headjual: document.getElementById('settingReceiptHeader').value.trim(),
         FootJual: document.getElementById('settingReceiptFooter').value.trim(), FootJual2: document.getElementById('settingReceiptFooter2').value.trim(),
         FootJual3: document.getElementById('settingReceiptFooter3').value.trim(), CetJual: document.getElementById('settingPrintSale').checked ? '1' : '0',
-        Barcode: document.getElementById('settingPrintBarcode').checked ? '1' : '0'
+        Barcode: document.getElementById('settingPrintBarcode').checked ? '1' : '0',
+        ReceiptSize: document.getElementById('settingReceiptSize').value || '58'
       };
       try {
         const response = await fetch('/api/pengaturan', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
         const result = await response.json();
         if (!result.success) throw new Error(result.message);
         businessSettings = payload;
+        document.getElementById('receiptSize').value = normalizeReceiptSize(payload.ReceiptSize);
         await loadBusinessSettings();
         alert(result.message);
       } catch (err) { alert(err.message); }
@@ -2985,6 +3001,31 @@
       } catch (err) { alert(err.message); }
     }
 
+    const RECEIPT_SIZES = { '40': { page: 40, effective: 38, extra: 1 }, '58': { page: 58, effective: 48, extra: 2 } };
+    function normalizeReceiptSize(value) { return String(value || '') === '40' ? '40' : '58'; }
+    function receiptSizeKey() { return normalizeReceiptSize(businessSettings.ReceiptSize || document.getElementById('receiptSize')?.value); }
+
+    function getReceiptCSS(sizeKey = '58') {
+      sizeKey = normalizeReceiptSize(sizeKey);
+      const size = RECEIPT_SIZES[sizeKey];
+      const fontSize = sizeKey === '40' ? '7pt' : '8.5pt';
+      const nameFontSize = sizeKey === '40' ? '9pt' : '11pt';
+      return `#printWrap{width:${size.effective}mm;margin:0 auto;padding:1mm 0;overflow:hidden;color:#000;background:#fff;font:700 ${fontSize}/1.25 Arial,'Helvetica Neue',sans-serif;-webkit-text-stroke:.2px #000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+#printWrap *{font-weight:700;color:#000}
+.rc-c{text-align:center}
+.rc-logo{display:block;margin:0 auto 1mm;max-width:${sizeKey === '40' ? '35' : '40'}mm;max-height:14mm;image-rendering:pixelated}
+.rc-name{font-size:${nameFontSize};letter-spacing:.2px}
+.rc-sm{font-size:${sizeKey === '40' ? '6.5pt' : '7.5pt'}}
+.rc-tag{margin:1mm 0;padding:.5mm 0;border:1px solid #000;text-align:center;letter-spacing:1px}
+.rc-hr{border-top:2px dashed #000;margin:1.5mm 0}
+.rc-row{display:flex;justify-content:space-between;gap:1.5mm}
+.rc-row>span:first-child{min-width:0;word-break:break-word}
+.rc-row>span:last-child{text-align:right;white-space:nowrap}
+.rc-item{margin-bottom:.8mm}
+.rc-iname{word-break:break-word}
+.rc-total{font-size:${sizeKey === '40' ? '9pt' : '11pt'};margin:.5mm 0}`;
+    }
+
     function renderReceipt(r) {
       const box = document.getElementById('receiptPrint');
       box.replaceChildren();
@@ -3013,24 +3054,10 @@
       if (footer.length) { box.append(hr()); footer.forEach(t => box.append(el('rc-c rc-sm', t))); }
       const html = box.innerHTML;
       box.replaceChildren();
-      printDocument({ html, css: RECEIPT_CSS, widthMm: 58, extraMm: 2 });
+      const sizeKey = receiptSizeKey();
+      const size = RECEIPT_SIZES[sizeKey];
+      printDocument({ html, css: getReceiptCSS(sizeKey), widthMm: size.page, extraMm: size.extra });
     }
-
-    // Printer 58 mm ini memiliki lebar cetak efektif 48 mm.
-    const RECEIPT_CSS = `#printWrap{width:48mm;margin:0 auto;padding:1mm 0;overflow:hidden;color:#000;background:#fff;font:700 8.5pt/1.25 Arial,'Helvetica Neue',sans-serif;-webkit-text-stroke:.2px #000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-#printWrap *{font-weight:700;color:#000}
-.rc-c{text-align:center}
-.rc-logo{display:block;margin:0 auto 1mm;max-width:40mm;max-height:16mm;image-rendering:pixelated}
-.rc-name{font-size:11pt;letter-spacing:.2px}
-.rc-sm{font-size:7.5pt}
-.rc-tag{margin:1mm 0;padding:.5mm 0;border:1px solid #000;text-align:center;letter-spacing:1px}
-.rc-hr{border-top:2px dashed #000;margin:1.5mm 0}
-.rc-row{display:flex;justify-content:space-between;gap:1.5mm}
-.rc-row>span:first-child{min-width:0;word-break:break-word}
-.rc-row>span:last-child{text-align:right;white-space:nowrap}
-.rc-item{margin-bottom:.8mm}
-.rc-iname{word-break:break-word}
-.rc-total{font-size:11pt;margin:.5mm 0}`;
 
     function receiptFooters() { return [businessSettings.FootJual, businessSettings.FootJual2, businessSettings.FootJual3]; }
     function receiptDate(dateText, timeText) {
